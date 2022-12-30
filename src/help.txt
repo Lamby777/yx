@@ -1,0 +1,25 @@
+--------------------------------------------------
+yx create
+- Create an index in the current directory
+yx create <path>
+- Create an index at the path specified
+
+yx list
+- List all indexed files
+yx list missing
+- List all indexed where the file doesn't exist
+yx list by <tag>
+- List indexed files with specified tag
+
+yx clean
+- Remove all indexed where the file doesn't exist
+yx purge
+- Clear index, deleting all tags
+yx purge yes
+- Purge without confirmation
+
+yx add <file> <tag>
+- Tag a file
+yx rm <file> <tag>
+- Untag a file
+--------------------------------------------------
