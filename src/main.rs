@@ -7,11 +7,18 @@ use std::{fs, env};
 use std::collections::HashMap;
 use std::path::PathBuf;
 use serde::{Serialize, Deserialize};
+use std::process::exit;
 
 mod sub;
 
 mod classes;
 use classes::*;
+
+/*
+* Exit Codes
+* 3 - .yx_index missing when required (maybe add a prompt to create one later)
+* 4 - Invalid command (help shown)
+*/
 
 fn main() {
 	// Get command line args
@@ -45,6 +52,11 @@ fn main() {
 
 			sub::create_index(path.join(".yx_index"), load_state());
 		},
+
+		"help"		=> {
+			show_help_no_exit();
+			exit(0);
+		},
 		
 		// dude has no clue what they're doing 💀
 		_			=> show_help()
@@ -52,6 +64,11 @@ fn main() {
 }
 
 pub fn show_help() {
+	show_help_no_exit();
+	exit(4);
+}
+
+pub fn show_help_no_exit() {
 	println!(include_str!("help.txt"));
 }
 
@@ -65,7 +82,8 @@ pub fn load_state() -> ProgramState {
 		},
 
 		Err(_) => {
-			panic!("No .yx_index in the current file structure!");
+			println!("No .yx_index in the current file structure!");
+			exit(3);
 		}
 	}
 }
