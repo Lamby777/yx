@@ -1,27 +1,45 @@
 --------------------------------------------------
 yx create
-- Create an index in the current directory
+-	Create an index in the current directory
 yx create <path>
-- Create an index at the path specified
+-	Create an index at the path specified
 
 yx list
-- List all indexed files
+-	List all indexed files
 yx list missing
-- List all indexed where the file doesn't exist
+-	List all indexed where the file doesn't exist
 yx list by <tag>
-- List indexed files with specified tag
+-	List indexed files with specified tag
 
 yx clean
-- Remove all indexed where the file doesn't exist
+-	Remove all indexed where the file doesn't exist
 yx mv <old> <new>
-- Move file, and move its tags to the new file
+-	Move file, and move its tags to the new file
 yx purge
-- Clear index, deleting all tags
+-	Clear index, deleting all tags
 yx purge yes
-- Purge without confirmation
+-	Purge without confirmation
 
 yx add <file> <tag>
-- Tag a file
+-	Tag a file
 yx rm <file> <tag>
-- Untag a file
+-	Untag a file
+
+yx constraint <constraint>
+- Limit future work to any files that match constraint
+yx free
+- Remove constraint, apply future commands to all files
+
+yx blanket <tag>
+- Apply tag to all files
+yx forget <tag>
+- Remove tag from all files that have it
+
+yx render
+-	Create a new folder with hardlinks to matching files
+yx render sym
+-	Render with symlinks instead
+yx render name
+-	Create copies instead of links, and rename them
+	to a list of their tags
 --------------------------------------------------
