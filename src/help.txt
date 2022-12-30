@@ -13,6 +13,8 @@ yx list by <tag>
 
 yx clean
 - Remove all indexed where the file doesn't exist
+yx mv <old> <new>
+- Move file, and move its tags to the new file
 yx purge
 - Clear index, deleting all tags
 yx purge yes

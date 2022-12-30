@@ -3,10 +3,10 @@
 * - Dex
 **/
 
-use std::env;
+use std::{fs, env};
 use std::collections::HashMap;
 use std::path::PathBuf;
-//use serde::{Serialize, Deserialize};
+use serde::{Serialize, Deserialize};
 
 mod sub;
 
@@ -43,7 +43,7 @@ fn main() {
 				path = PathBuf::from(&args[0]);
 			}
 
-			sub::create_index(path);
+			sub::create_index(path.join(".yx_index"));
 		},
 		
 		// dude has no clue what they're doing 💀
@@ -51,6 +51,6 @@ fn main() {
 	}
 }
 
-fn show_help() -> () {
+fn show_help() {
 	println!(include_str!("help.txt"));
 }
