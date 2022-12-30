@@ -43,7 +43,7 @@ fn main() {
 				path = PathBuf::from(&args[0]);
 			}
 
-			sub::create_index(path.join(".yx_index"));
+			sub::create_index(path.join(".yx_index"), load_state());
 		},
 		
 		// dude has no clue what they're doing 💀
@@ -51,6 +51,21 @@ fn main() {
 	}
 }
 
-fn show_help() {
+pub fn show_help() {
 	println!(include_str!("help.txt"));
+}
+
+pub fn load_state() -> ProgramState {
+	let res = fs::read_to_string(".yx_index");
+
+	// make this check for .yx_index in all parent dirs later on
+	match res {
+		Ok(content) => {
+			serde_json::from_str(&content).unwrap()
+		},
+
+		Err(e) => {
+			panic!("No .yx_index in the current file structure!");
+		}
+	}
 }
