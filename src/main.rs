@@ -64,7 +64,7 @@ pub fn load_state() -> ProgramState {
 			serde_json::from_str(&content).unwrap()
 		},
 
-		Err(e) => {
+		Err(_) => {
 			panic!("No .yx_index in the current file structure!");
 		}
 	}

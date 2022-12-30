@@ -8,8 +8,10 @@
 use crate::{PathBuf, fs, ProgramState};
 
 pub fn create_index(path: PathBuf, state: ProgramState) {
-	let ser = serde_json::to_string(&state).unwrap();;
+	let ser = serde_json::to_string(&state).unwrap();
 
 	// Make the file
-	fs::write(path, "test");
+	if let Err(_) = fs::write(&path, ser) {
+		panic!("Failed to write to {:?}!", path);
+	}
 }
