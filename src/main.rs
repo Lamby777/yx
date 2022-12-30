@@ -6,6 +6,8 @@
 use std::env;
 use serde::{Serialize, Deserialize};
 
+mod sub;
+
 fn main() {
 	// Get command line args
 	let args: Vec<String> = env::args().collect();
@@ -14,6 +16,13 @@ fn main() {
 
 	let cmd = &args[1];		// give the cmd its own binding
 	let args = &args[2..];	// shadow first vec
+
+	match cmd.as_str() {
+		"create"	=> sub::create(),
+
+		// dude has no clue what they're doing 💀
+		_			=> show_help()
+	}
 }
 
 fn show_help() -> () {
