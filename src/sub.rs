@@ -5,6 +5,8 @@
 * - Dex, 1:32 AM, 12/30/2022
 */
 
-pub fn create() {
+use crate::{PathBuf};
+
+pub fn create_index(path: PathBuf) {
 	// Make the file
 }

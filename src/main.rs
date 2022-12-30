@@ -6,7 +6,7 @@
 use std::env;
 use std::collections::HashMap;
 use std::path::PathBuf;
-use serde::{Serialize, Deserialize};
+//use serde::{Serialize, Deserialize};
 
 mod sub;
 
@@ -23,8 +23,29 @@ fn main() {
 	let args = &args[2..];	// shadow first vec
 
 	match cmd.as_str() {
-		"create"	=> sub::create(),
+		"create"	=> {
+			let path: PathBuf;
+			
+			if args.len() < 1 {
+				// current working dir
+				let cwd = env::current_dir();
 
+				match cwd {
+					Ok(val) => {
+						path = PathBuf::from(val);
+					},
+
+					Err(_) => {
+						return println!("Error getting current directory");
+					}
+				}
+			} else {
+				path = PathBuf::from(&args[0]);
+			}
+
+			sub::create_index(path);
+		},
+		
 		// dude has no clue what they're doing 💀
 		_			=> show_help()
 	}
