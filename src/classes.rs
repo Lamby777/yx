@@ -6,12 +6,28 @@ use crate::{HashMap, PathBuf, Serialize, Deserialize};
 
 #[derive(Serialize, Deserialize)]
 pub struct ProgramState {
-	index: HashMap<PathBuf, YxFileRecord>
+	pub index: HashMap<PathBuf, YxFileRecord>
+}
+
+impl ProgramState {
+	pub fn new() -> Self {
+		ProgramState {
+			index: HashMap::new(),
+		}
+	}
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct YxFileRecord {
 	tags: Vec<YxTag>
+}
+
+impl YxFileRecord {
+	pub fn new() -> Self {
+		YxFileRecord {
+			tags: vec![],
+		}
+	}
 }
 
 pub type YxTag = String;

@@ -8,6 +8,7 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use serde::{Serialize, Deserialize};
 use std::process::exit;
+use text_io::read;
 
 mod sub;
 
@@ -18,6 +19,7 @@ use classes::*;
 * Exit Codes
 * 3 - .yx_index missing when required (maybe add a prompt to create one later)
 * 4 - Invalid command (help shown)
+* 5 - Attempt to create an existing index
 */
 
 fn main() {
@@ -50,7 +52,15 @@ fn main() {
 				path = PathBuf::from(&args[0]);
 			}
 
-			sub::create_index(path.join(".yx_index"), load_state());
+			// shadow old path with appended version
+			let path = path.join(".yx_index");
+
+			if path.exists() {
+				println!("An index already exists here! Consider deleting it.");
+				exit(5);
+			}
+
+			sub::create_index(path, ProgramState::new());
 		},
 
 		"help"		=> {
@@ -72,18 +82,15 @@ pub fn show_help_no_exit() {
 	println!(include_str!("help.txt"));
 }
 
-pub fn load_state() -> ProgramState {
+pub fn load_state() -> Result<ProgramState, std::io::Error> {
 	let res = fs::read_to_string(".yx_index");
 
 	// make this check for .yx_index in all parent dirs later on
 	match res {
-		Ok(content) => {
-			serde_json::from_str(&content).unwrap()
-		},
+		Ok(content) => Ok(serde_json::from_str(&content).unwrap()),
 
-		Err(_) => {
-			println!("No .yx_index in the current file structure!");
-			exit(3);
-		}
+		Err(e) => Err(e),
+//			println!("No .yx_index in the current file structure!");
+//			exit(3);
 	}
 }
