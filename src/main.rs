@@ -34,6 +34,8 @@ fn main() -> Result<(), ()> {
 
 	match cmd.as_str() {
 		"create"	=> {
+			assert_argc(args, &[0, 1]);
+
 			let path: PathBuf;
 			
 			if args.len() < 1 {
@@ -51,6 +53,8 @@ fn main() -> Result<(), ()> {
 		},
 
 		"add"		=> {
+			assert_argc(args, &[2]);
+
 			let mut st = load_state_unwrap();
 
 			sub::add_tag_to(
@@ -63,6 +67,8 @@ fn main() -> Result<(), ()> {
 		},
 
 		"rm"		=> {
+			assert_argc(args, &[2]);
+
 			let mut st = load_state_unwrap();
 
 			// If file doesn't have tag, yell at the user :P
@@ -117,4 +123,15 @@ pub fn get_index_path() -> PathBuf {
 
 pub fn get_cwd() -> PathBuf {
 	env::current_dir().expect("Error getting current directory")
+}
+
+pub fn assert_argc(args: &[String], lens: &[usize]) {
+	let len = args.len();
+
+	let mapped: Vec<String> = lens.iter().map(|&id| id.to_string()).collect();
+	let joined = mapped.join("|");
+
+	if !lens.contains(&len) {
+		panic!("This subcommand requires {} arguments, but you only gave {}!", joined, len);
+	}
 }
