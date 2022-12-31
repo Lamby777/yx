@@ -7,7 +7,6 @@ use std::{fs, env};
 use std::collections::HashMap;
 use std::path::PathBuf;
 use serde::{Serialize, Deserialize};
-use std::process::exit;
 //use text_io::read;
 
 mod sub;
@@ -17,7 +16,7 @@ use classes::*;
 
 /*
 * Exit Codes
-* 3 - Index missing when required (maybe add a prompt to create one later)
+* 3 - (maybe add a prompt to create one later)
 * 4 - Invalid command (help shown)
 * 5 - Attempt to create an existing index
 */
@@ -45,8 +44,7 @@ fn main() -> Result<(), ()> {
 			}
 
 			if path.exists() {
-				println!("An index already exists here! Consider deleting it.");
-				exit(5);
+				panic!("An index already exists here! Consider deleting it.");
 			}
 
 			sub::write_to_index(path, ProgramState::new());
@@ -80,11 +78,6 @@ fn main() -> Result<(), ()> {
 
 			sub::write_to_index(get_index_path(), st)
 		},
-
-		"help"		=> {
-			show_help_no_exit();
-			exit(0);
-		},
 		
 		// dude has no clue what they're doing 💀
 		_			=> show_help()
@@ -94,11 +87,6 @@ fn main() -> Result<(), ()> {
 }
 
 pub fn show_help() {
-	show_help_no_exit();
-	exit(4);
-}
-
-pub fn show_help_no_exit() {
 	println!(include_str!("help.txt"));
 }
 
@@ -106,8 +94,7 @@ pub fn load_state_unwrap() -> ProgramState {
 	let state = load_state();
 
 	if let Err(_) = state {
-		println!("No {} in the current file structure!", INDEX_FILE_NAME);
-		exit(3);
+		panic!("No {} in the current file structure!", INDEX_FILE_NAME);
 	}
 
 	state.unwrap()
