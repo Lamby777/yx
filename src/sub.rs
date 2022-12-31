@@ -25,3 +25,27 @@ pub fn add_tag_to(state: &mut ProgramState, path: PathBuf, tag: &str) {
 		YxFileRecord::new(tag.to_owned())
 	);
 }
+
+pub fn rm_tag_from(state: &mut ProgramState, path: PathBuf, tag: &str) {
+	// WILL NOT CHECK IF THE TAG IS THERE!
+	// Use `file_has_tag` first if you need to know.
+
+	let tag = tag.to_string();
+
+	state.index.entry(path).and_modify(|record| {
+		record.tags.retain(|v| v.as_str() != tag)
+	});
+}
+
+pub fn file_has_tag(state: &ProgramState, path: PathBuf, tag: &str) -> bool {
+	let record = state.index.get(&path);
+
+	if record.is_none() {
+		panic!("File not in index!");
+	}
+
+	// shadow with unwrapped value
+	let record = record.unwrap();
+
+	record.tags.contains(&tag.to_string())
+}

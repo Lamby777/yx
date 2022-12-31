@@ -62,7 +62,24 @@ fn main() -> Result<(), ()> {
 			);
 
 			sub::write_to_index(get_index_path(), st)
-		}
+		},
+
+		"rm"		=> {
+			let mut st = load_state_unwrap();
+
+			// If file doesn't have tag, yell at the user :P
+			if !(sub::file_has_tag(&st, (&args[0]).into(), &args[1])) {
+				panic!("File already has this tag!");
+			}
+
+			sub::rm_tag_from(
+				&mut st,
+				(&args[0]).into(),
+				&args[1]
+			);
+
+			sub::write_to_index(get_index_path(), st)
+		},
 
 		"help"		=> {
 			show_help_no_exit();
