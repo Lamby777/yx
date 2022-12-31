@@ -17,10 +17,11 @@ pub fn write_to_index(path: PathBuf, state: ProgramState) {
 }
 
 pub fn add_tag_to(state: &mut ProgramState, path: PathBuf, tag: &str) {
-	let mut record = YxFileRecord::new();
-	record.tags.push(tag.to_string());
+	let tag = tag.to_string();
 
-	state.index.entry(path).and_modify(|v|
-		*v = record
+	state.index.entry(path).and_modify(|record|
+		record.tags.push(tag.to_owned())
+	).or_insert(
+		YxFileRecord::new(tag.to_owned())
 	);
 }

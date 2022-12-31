@@ -5,7 +5,7 @@
 
 use std::{fs, env};
 use std::collections::HashMap;
-use std::path::{PathBuf, Path};
+use std::path::PathBuf;
 use serde::{Serialize, Deserialize};
 use std::process::exit;
 //use text_io::read;
@@ -107,10 +107,8 @@ pub fn load_state() -> Result<ProgramState, std::io::Error> {
 }
 
 pub fn get_index_path() -> PathBuf {
-	let cwd = get_cwd();
-	
 	// make this actually search for stuff in parent folders later
-	cwd.join(INDEX_FILE_NAME)
+	get_cwd().join(INDEX_FILE_NAME)
 }
 
 pub fn get_cwd() -> PathBuf {
