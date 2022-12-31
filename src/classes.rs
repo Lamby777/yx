@@ -19,7 +19,7 @@ impl ProgramState {
 
 #[derive(Serialize, Deserialize)]
 pub struct YxFileRecord {
-	tags: Vec<YxTag>
+	pub tags: Vec<YxTag>
 }
 
 impl YxFileRecord {
