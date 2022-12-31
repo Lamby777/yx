@@ -5,7 +5,7 @@
 
 use std::{fs, env};
 use std::collections::HashMap;
-use std::path::PathBuf;
+use std::path::{PathBuf, Path};
 use serde::{Serialize, Deserialize};
 use std::process::exit;
 //use text_io::read;
@@ -17,10 +17,12 @@ use classes::*;
 
 /*
 * Exit Codes
-* 3 - .yx_index missing when required (maybe add a prompt to create one later)
+* 3 - Index missing when required (maybe add a prompt to create one later)
 * 4 - Invalid command (help shown)
 * 5 - Attempt to create an existing index
 */
+
+const INDEX_FILE_NAME: &str = ".yx_index";
 
 fn main() -> Result<(), ()> {
 	// Get command line args
@@ -37,23 +39,10 @@ fn main() -> Result<(), ()> {
 			
 			if args.len() < 1 {
 				// current working dir
-				let cwd = env::current_dir();
-
-				match cwd {
-					Ok(val) => {
-						path = PathBuf::from(val);
-					},
-
-					Err(_) => {
-						panic!("Error getting current directory");
-					}
-				}
+				path = get_cwd().join(INDEX_FILE_NAME);
 			} else {
 				path = PathBuf::from(&args[0]);
 			}
-
-			// shadow old path with appended version
-			let path = path.join(".yx_index");
 
 			if path.exists() {
 				println!("An index already exists here! Consider deleting it.");
@@ -72,7 +61,7 @@ fn main() -> Result<(), ()> {
 				&args[1]
 			);
 
-			sub::write_to_index(PathBuf::new(), st)
+			sub::write_to_index(get_index_path(), st)
 		}
 
 		"help"		=> {
@@ -100,7 +89,7 @@ pub fn load_state_unwrap() -> ProgramState {
 	let state = load_state();
 
 	if let Err(_) = state {
-		println!("No .yx_index in the current file structure!");
+		println!("No {} in the current file structure!", INDEX_FILE_NAME);
 		exit(3);
 	}
 
@@ -108,12 +97,22 @@ pub fn load_state_unwrap() -> ProgramState {
 }
 
 pub fn load_state() -> Result<ProgramState, std::io::Error> {
-	let res = fs::read_to_string(".yx_index");
+	let res = fs::read_to_string(get_index_path());
 
-	// make this check for .yx_index in all parent dirs later on
 	match res {
 		Ok(content) => Ok(serde_json::from_str(&content).unwrap()),
 
 		Err(e) => Err(e),
 	}
+}
+
+pub fn get_index_path() -> PathBuf {
+	let cwd = get_cwd();
+	
+	// make this actually search for stuff in parent folders later
+	cwd.join(INDEX_FILE_NAME)
+}
+
+pub fn get_cwd() -> PathBuf {
+	env::current_dir().expect("Error getting current directory")
 }
