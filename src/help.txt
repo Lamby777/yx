@@ -37,9 +37,10 @@ yx forget <tag>
 
 yx render
 -	Create a new folder with hardlinks to matching files
-yx render sym
--	Render with symlinks instead
-yx render name
--	Create copies instead of links, and rename them
-	to a list of their tags
+yx render named
+-	Rename the links to a list of their tags
+yx render copy
+-	Copy instead of making hardlinks
+yx render copy named
+-	Copy and then rename the copies
 --------------------------------------------------

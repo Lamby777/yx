@@ -14,13 +14,6 @@ mod sub;
 mod classes;
 use classes::*;
 
-/*
-* Exit Codes
-* 3 - (maybe add a prompt to create one later)
-* 4 - Invalid command (help shown)
-* 5 - Attempt to create an existing index
-*/
-
 const INDEX_FILE_NAME: &str = ".yx_index";
 
 fn main() -> Result<(), ()> {
