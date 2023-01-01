@@ -26,12 +26,14 @@ fn main() {
 	
 	if args.len() < 2 { return show_help(); }
 
-	let cmd = &args[1];		// give the cmd its own binding
+	let cmd = &args[1].to_lowercase();		// give the cmd its own binding
 	let args = &args[2..];	// shadow first vec
 
-	let cmd_str = cmd.as_str();
+	// shadow the String with a &str slice into itself
+	// OR with an alias's full form, if possible
+	let cmd = cmd_replace_aliases(cmd);
 
-	match cmd_str {
+	match cmd {
 		"create"	=> {
 			assert_argc(args, &[0, 1]);
 
@@ -126,7 +128,7 @@ fn main() {
 
 			let mut st = load_state();
 
-			let f = match cmd_str {
+			let f = match cmd {
 				"mv"		=> sub::move_file_and_tags,
 				"mvt"		=> sub::move_tags,
 				"cp"		=> sub::copy_file_and_tags,
@@ -290,5 +292,37 @@ pub fn assert_argc(args: &[String], lens: &[usize]) {
 
 	if !lens.contains(&len) {
 		panic!("This subcommand requires {} arguments, but you only gave {}!", joined, len);
+	}
+}
+
+fn cmd_replace_aliases<'a>(cmd: &'a String) -> &'a str {
+	match cmd.as_str() {
+		"ls"				=> "list",
+		"move"				=> "mv",
+		"copy"				=> "cp",
+
+		"mvtags"			|
+		"movetags"			=> "mvt",
+		
+		"cptags"			|
+		"owtags"			|
+		"overwritetags"		|
+		"overwrite"			|
+		"cpoverwrite"		|
+		"cpo"				|
+		"copytags"			=> "cpt",
+
+		"merge"				|
+		"mergetags"			|
+		"mt"				|
+		"met"				|
+		"append"			|
+		"appendtags"		=> "apt",
+
+		"moveapt"			|
+		"moveappend"		|
+		"moveappendtags"	=> "mapt",
+
+		_		=> &cmd
 	}
 }
