@@ -55,7 +55,7 @@ fn main() -> Result<(), ()> {
 		"add"		=> {
 			assert_argc(args, &[2]);
 
-			let mut st = load_state_unwrap();
+			let mut st = load_state();
 
 			sub::add_tag_to(
 				&mut st,
@@ -63,13 +63,13 @@ fn main() -> Result<(), ()> {
 				&args[1]
 			);
 
-			sub::write_to_index(get_closest_index(), st)
+			sub::write_to_index(get_closest_index().unwrap(), st)
 		},
 
 		"rm"		=> {
 			assert_argc(args, &[2]);
 
-			let mut st = load_state_unwrap();
+			let mut st = load_state();
 
 			// If file doesn't have tag, yell at the user :P
 			if !(sub::file_has_tag(&st, (&args[0]).into(), &args[1])) {
@@ -82,7 +82,7 @@ fn main() -> Result<(), ()> {
 				&args[1]
 			);
 
-			sub::write_to_index(get_closest_index(), st)
+			sub::write_to_index(get_closest_index().unwrap(), st)
 		},
 		
 		// dude has no clue what they're doing 💀
@@ -96,28 +96,34 @@ pub fn show_help() {
 	println!(include_str!("help.txt"));
 }
 
-pub fn load_state_unwrap() -> ProgramState {
-	let state = load_state();
-
-	if let Err(_) = state {
-		panic!("No {} in the current file structure!", INDEX_FILE_NAME);
+pub fn load_state() -> ProgramState {
+	let index = get_closest_index();
+	
+	if index.is_none() {
+		panic!("{} not found in current path!", INDEX_FILE_NAME);
 	}
 
-	state.unwrap()
-}
+	let index = index.unwrap();
 
-pub fn load_state() -> Result<ProgramState, std::io::Error> {
-	let res = fs::read_to_string(get_closest_index());
+	let res = fs::read_to_string(index);
 
 	match res {
-		Ok(content) => Ok(serde_json::from_str(&content).unwrap()),
+		Ok(content) => serde_json::from_str(&content).unwrap(),
 
-		Err(e) => Err(e),
+		Err(_) => {
+			panic!("Error deserializing .yx_index!");
+		},
 	}
 }
 
-pub fn get_closest_index() -> PathBuf {
-	get_all_current_indexes()[0].clone()
+pub fn get_closest_index() -> Option<PathBuf> {
+	let v = get_all_current_indexes();
+
+	if v.len() <= 0 {
+		None
+	} else {
+		Some(v[0].clone())
+	}
 }
 
 pub fn get_all_current_indexes() -> Vec<PathBuf> {
