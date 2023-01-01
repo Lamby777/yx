@@ -145,6 +145,34 @@ fn main() {
 			sub::write_to_index(get_closest_index().unwrap(), st)
 		},
 
+		"mv"		=> {
+			assert_argc(args, &[2]);
+
+			let mut st = load_state();
+
+			sub::move_file_and_tags(
+				&mut st,
+				(&args[0]).into(),
+				(&args[1]).into()
+			);
+
+			sub::write_to_index(get_closest_index().unwrap(), st)
+		},
+
+		"mvtags"	=> {
+			assert_argc(args, &[2]);
+
+			let mut st = load_state();
+
+			sub::move_tags(
+				&mut st,
+				(&args[0]).into(),
+				(&args[1]).into()
+			);
+
+			sub::write_to_index(get_closest_index().unwrap(), st)
+		},
+
 		"list"		=> {
 			assert_argc(args, &[0, 1, 2]);
 			let argc = args.len();
