@@ -7,6 +7,7 @@ use std::{fs, env};
 use std::collections::HashMap;
 use std::path::PathBuf;
 use serde::{Serialize, Deserialize};
+use indoc::indoc;
 //use text_io::read;
 
 mod sub;
@@ -14,7 +15,10 @@ mod sub;
 mod classes;
 use classes::*;
 
-const INDEX_FILE_NAME: &str = ".yx_index";
+const INDEX_FILE_NAME: &str	= ".yx_index";
+
+// a shit ton of dashes to split up condensed data
+const LINE_SEPARATOR: &str	= "-----------------------------------";
 
 fn main() -> Result<(), ()> {
 	// Get command line args
@@ -76,6 +80,50 @@ fn main() -> Result<(), ()> {
 			);
 
 			sub::write_to_index(get_closest_index().unwrap(), st)
+		},
+
+		"list"		=> {
+			assert_argc(args, &[0, 1, 2]);
+			let argc = args.len();
+
+			let st = load_state();
+
+			match argc {
+				0 => {
+					// yx list
+
+					let it = st.index.iter();
+
+					if it.len() <= 0 {
+						println!( indoc! {"
+							{}
+							Index has no entries!
+							Use `yx add <file> <tag>` to get started.
+							{}
+						"}, LINE_SEPARATOR, LINE_SEPARATOR);
+					} else {
+						println!("{}", LINE_SEPARATOR);
+
+						// if there are records, print 'em out.
+						for (path, record) in it {
+							let tags = record.tags.join(", ");
+
+							println!("{} >> {tags}", path.display());
+							println!("{}\n", LINE_SEPARATOR);
+						}
+					}
+				},
+				
+				1 => {
+					// yx list missing
+				},
+
+				2 => {
+					// `yx list by <tag>`
+				},
+
+				_ => () // bruh
+			}
 		},
 		
 		// dude has no clue what they're doing 💀
