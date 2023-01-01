@@ -100,23 +100,25 @@ pub fn copy_tags(state: &mut ProgramState, path_o: PathBuf, path_n: PathBuf) {
 
 // Let N keep its tags, but add any O has that N doesn't
 pub fn append_tags(state: &mut ProgramState, path_o: PathBuf, path_n: PathBuf) {
-	let index = &mut state.index;
-
-	let got = index.get_many_mut([
-		&path_o, &path_n
-	]);
-
-	if let Some(got) = got {
-		let [rec_o, rec_n] = got;
-
-		rec_n.tags.extend(rec_o.tags.clone());
-	} else {
-		println!("One of those 2 files doesn't exist!");
-	}
+	get_tags_of_two_files_and_then(state, path_o, path_n, |o, n| {
+		n.tags.extend(o.tags.clone());
+	})
 }
 
 // Append to N from O, but remove said tags from O
 pub fn append_tags_rm_old(state: &mut ProgramState, path_o: PathBuf, path_n: PathBuf) {
+	get_tags_of_two_files_and_then(state, path_o, path_n, |o, n| {
+		n.tags.extend(o.tags.clone());
+		o.tags.clear();
+	})
+}
+
+fn get_tags_of_two_files_and_then(
+	state:	&mut ProgramState,
+	path_o:	PathBuf,
+	path_n:	PathBuf,
+	then:	fn(&mut YxFileRecord, &mut YxFileRecord) -> ()
+) {
 	let index = &mut state.index;
 
 	let got = index.get_many_mut([
@@ -126,10 +128,9 @@ pub fn append_tags_rm_old(state: &mut ProgramState, path_o: PathBuf, path_n: Pat
 	if let Some(got) = got {
 		let [rec_o, rec_n] = got;
 
-		rec_n.tags.extend(rec_o.tags.clone());
-		rec_o.tags.clear();
+		then(rec_o, rec_n);
 	} else {
-		println!("One of those 2 files doesn't exist!");
+		println!("One of those 2 paths doesn't exist!");
 	}
 }
 
