@@ -6,7 +6,8 @@
 **/
 
 use std::{fs, env};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
+use itertools::Itertools;
 use std::path::PathBuf;
 use serde::{Serialize, Deserialize};
 use indoc::indoc;
@@ -204,7 +205,7 @@ fn main() {
 
 			// if there are records, print 'em out.
 			for (path, record) in it {
-				let tags = record.tags.join(", ");
+				let tags = record.tags.iter().join(", ");
 
 				println!("{} >> {tags}", path.display());
 				println!("{}", LINE_SEPARATOR);
