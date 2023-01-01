@@ -97,6 +97,30 @@ pub fn copy_tags(state: &mut ProgramState, path_o: PathBuf, path_n: PathBuf) {
 	}
 }
 
+// Let N keep its tags, but add any O has that N doesn't
+pub fn append_tags(state: &mut ProgramState, path_o: PathBuf, path_n: PathBuf) {
+	let index = &mut state.index;
+
+	let got = index.get_many_mut([
+		&path_o, &path_n
+	]);
+
+	if let Some(got) = got {
+		let [rec_o, rec_n] = got;
+
+		rec_n.tags.extend(rec_o.tags.clone());
+
+		rec_n.tags.dedup();
+	} else {
+		println!("One of those 2 files doesn't exist!");
+	}
+}
+
+// Append to N from O, but remove said tags from O
+pub fn append_tags_rm_old(state: &mut ProgramState, path_o: PathBuf, path_n: PathBuf) {
+	//
+}
+
 pub fn confirm_purge(closest: &PathBuf) -> bool {
 	println!( indoc! {"
 		Are you sure? This will clear out every tag from the index!

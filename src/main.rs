@@ -1,3 +1,5 @@
+#![feature(map_many_mut)]
+
 /**
 * Okay, I'm back to having no idea what I'm doing. <3
 * - Dex
@@ -133,8 +135,8 @@ fn main() {
 				"mvt"		=> sub::move_tags,
 				"cp"		=> sub::copy_file_and_tags,
 				"cpt"		=> sub::copy_tags,
-				//"apt"		=> sub::append_tags,
-				//"mapt"	=> sub::append_tags_rm_old,
+				"apt"		=> sub::append_tags,
+				"mapt"		=> sub::append_tags_rm_old,
 
 				_ => panic!("bruh"),
 			};
