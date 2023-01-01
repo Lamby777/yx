@@ -5,7 +5,8 @@
 
 use std::{fs, env};
 use std::collections::HashMap;
-use std::path::PathBuf;
+use std::collections::hash_map::Iter;
+use std::path::{PathBuf, Path};
 use serde::{Serialize, Deserialize};
 use indoc::indoc;
 //use text_io::read;
@@ -88,7 +89,21 @@ fn main() {
 
 			let st = load_state();
 
-			let it = st.index.iter();
+			let pred: fn(&(&PathBuf, &YxFileRecord)) -> bool = match argc {
+				// yx list missing
+				1 => |v| v.0.exists(),
+
+				// yx list by <tag>
+				2 => |v| true,
+
+				// yx list
+				_ => |v| true,
+			};
+
+			// i love shadowing :D
+			let it = st.index.iter().filter(pred);
+			let temp = it.collect::<HashMap<_, _>>();
+			let it = temp.iter();
 
 			if it.len() <= 0 {
 				return println!( indoc! {"
@@ -97,19 +112,6 @@ fn main() {
 					Use `yx add <file> <tag>` to get started.
 					{}
 				"}, LINE_SEPARATOR, LINE_SEPARATOR);
-			}
-
-
-			match argc {
-				1 => {
-					// yx list missing
-				},
-
-				2 => {
-					// `yx list by <tag>`
-				},
-
-				_ => () // yx list
 			}
 
 			
