@@ -17,7 +17,7 @@ impl ProgramState {
 	}
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct YxFileRecord {
 	pub tags: Vec<YxTag>
 }

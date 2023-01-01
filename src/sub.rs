@@ -74,6 +74,29 @@ pub fn move_tags(state: &mut ProgramState, path_o: PathBuf, path_n: PathBuf) {
 	}
 }
 
+pub fn copy_file_and_tags(state: &mut ProgramState, path_o: PathBuf, path_n: PathBuf) {
+	// copy the file...
+	if let Err(_) = fs::copy(&path_o, &path_n) {
+		panic!("There was a problem copying the file. Your tags were not affected.")
+	}
+
+	// then copy tags
+	copy_tags(state, path_o, path_n);
+}
+
+// Overwrite N's tags with O's
+pub fn copy_tags(state: &mut ProgramState, path_o: PathBuf, path_n: PathBuf) {
+	let index = &mut state.index;
+
+	let val = index.get(&path_o);
+
+	if let Some(val) = val {
+		index.insert(path_n, (*val).clone());
+	} else {
+		println!("Failed to copy from tag {}; it doesn't exist!", path_o.display());
+	}
+}
+
 pub fn confirm_purge(closest: &PathBuf) -> bool {
 	println!( indoc! {"
 		Are you sure? This will clear out every tag from the index!

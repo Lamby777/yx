@@ -29,7 +29,9 @@ fn main() {
 	let cmd = &args[1];		// give the cmd its own binding
 	let args = &args[2..];	// shadow first vec
 
-	match cmd.as_str() {
+	let cmd_str = cmd.as_str();
+
+	match cmd_str {
 		"create"	=> {
 			assert_argc(args, &[0, 1]);
 
@@ -117,26 +119,25 @@ fn main() {
 			sub::write_to_index(get_closest_index().unwrap(), st)
 		},
 
-		"mv"		=> {
+		"mv"	| "mvt"	|
+		"cp"	| "cpt"	|
+		"apt"	| "mapt" => {
 			assert_argc(args, &[2]);
 
 			let mut st = load_state();
 
-			sub::move_file_and_tags(
-				&mut st,
-				(&args[0]).into(),
-				(&args[1]).into()
-			);
+			let f = match cmd_str {
+				"mv"		=> sub::move_file_and_tags,
+				"mvt"		=> sub::move_tags,
+				"cp"		=> sub::copy_file_and_tags,
+				"cpt"		=> sub::copy_tags,
+				//"apt"		=> sub::append_tags,
+				//"mapt"	=> sub::append_tags_rm_old,
 
-			sub::write_to_index(get_closest_index().unwrap(), st)
-		},
+				_ => panic!("bruh"),
+			};
 
-		"mvtags"	=> {
-			assert_argc(args, &[2]);
-
-			let mut st = load_state();
-
-			sub::move_tags(
+			f(
 				&mut st,
 				(&args[0]).into(),
 				(&args[1]).into()
