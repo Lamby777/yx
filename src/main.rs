@@ -8,7 +8,7 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use serde::{Serialize, Deserialize};
 use indoc::indoc;
-//use text_io::read;
+use text_io::read;
 
 mod sub;
 
@@ -49,6 +49,69 @@ fn main() {
 			sub::write_to_index(path, ProgramState::new());
 		},
 
+		"purge"		=> {
+			// short circuit check if "yes" is the next arg
+			let mut confirmed = args.len() >= 1 && (args[0] == "yes");
+			let closest = get_closest_index();
+
+			if closest.is_none() {
+				panic!("No index files in this directory or any of its parent directories!");
+			}
+
+			let closest = closest.unwrap();
+
+			if !confirmed {
+				if args.len() <= 0 {
+					println!( indoc! {"
+						Are you sure? This will clear out every tag from the index!
+						Just to be clear, you'll be clearing this index:
+						{}
+						(found closest to the current working directory)
+					
+					[Y/N]"}, closest.display());
+					
+					let res: char;
+
+					loop {
+						let res_attempt: String = read!();
+						let res_attempt = res_attempt.to_lowercase().chars().nth(0);
+
+						if let Some(res_n) = res_attempt {
+							res = res_n;
+							break
+						} else {
+							println!("Really? Come on! Type something!");
+						}
+					}
+
+					if res == 'y' {
+						confirmed = true;
+					}
+				} else {
+					show_help();
+					panic!("Invalid use of yx purge!");
+				}
+			}
+
+			if !confirmed {
+				return;
+			}
+
+			// are they gone yet?
+
+			// ok cool, they're gone.
+
+			// at long last, we purge the tags, because
+			// no one with any regrets would get this far.
+
+			let mut st = load_state();
+			st.index = HashMap::new();
+
+			sub::write_to_index(closest, st);
+
+			// that wasn't so hard, was it?
+		},
+
 		"add"		=> {
 			assert_argc(args, &[2]);
 
@@ -77,6 +140,34 @@ fn main() {
 				&mut st,
 				(&args[0]).into(),
 				&args[1]
+			);
+
+			sub::write_to_index(get_closest_index().unwrap(), st)
+		},
+
+		"mv"		=> {
+			assert_argc(args, &[2]);
+
+			let mut st = load_state();
+
+			sub::move_file_and_tags(
+				&mut st,
+				(&args[0]).into(),
+				(&args[1]).into()
+			);
+
+			sub::write_to_index(get_closest_index().unwrap(), st)
+		},
+
+		"mvtags"	=> {
+			assert_argc(args, &[2]);
+
+			let mut st = load_state();
+
+			sub::move_tags(
+				&mut st,
+				(&args[0]).into(),
+				(&args[1]).into()
 			);
 
 			sub::write_to_index(get_closest_index().unwrap(), st)

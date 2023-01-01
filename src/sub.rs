@@ -49,3 +49,25 @@ pub fn file_has_tag(state: &ProgramState, path: PathBuf, tag: &str) -> bool {
 
 	record.tags.contains(&tag.to_string())
 }
+
+pub fn move_file_and_tags(state: &mut ProgramState, path_o: PathBuf, path_n: PathBuf) {
+	// move the file...
+	if let Err(_) = fs::rename(&path_o, &path_n) {
+		panic!("There was a problem moving the file. Your tags were not affected.")
+	}
+
+	// then move tags
+	move_tags(state, path_o, path_n);
+}
+
+pub fn move_tags(state: &mut ProgramState, path_o: PathBuf, path_n: PathBuf) {
+	let index = &mut state.index;
+
+	let val = index.remove(&path_o);
+
+	if let Some(val) = val {
+		index.insert(path_n, val);
+	} else {
+		println!("Failed to move tag {}; it doesn't exist!", path_o.display());
+	}
+}
