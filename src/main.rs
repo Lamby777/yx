@@ -5,8 +5,7 @@
 
 use std::{fs, env};
 use std::collections::HashMap;
-use std::collections::hash_map::Iter;
-use std::path::{PathBuf, Path};
+use std::path::PathBuf;
 use serde::{Serialize, Deserialize};
 use indoc::indoc;
 //use text_io::read;
@@ -89,21 +88,32 @@ fn main() {
 
 			let st = load_state();
 
-			let pred: fn(&(&PathBuf, &YxFileRecord)) -> bool = match argc {
-				// yx list missing
-				1 => |v| v.0.exists(),
+			let it = st.index.into_iter();
 
-				// yx list by <tag>
-				2 => |v| true,
+			let it = match argc {
+				1 => {
+					// yx list <missing>
+					if &args[0].to_lowercase() == "missing" {
+						let it = it.filter(|v| v.0.exists());
+						let temp = it.collect::<HashMap<_, _>>();
+						temp.into_iter()
+					} else {
+						show_help();
+						panic!("Invalid use of `yx list <arg>`");
+						//panic!("List method {} not found!", &args[0]);
+					}
+				},
 
-				// yx list
-				_ => |v| true,
+				2 => {
+					// Q: Why not combine this and the _ case?
+					// A: This is just a placeholder for the `yx list by <tag>` case.
+					it
+				},
+
+				_ => {
+					it
+				}
 			};
-
-			// i love shadowing :D
-			let it = st.index.iter().filter(pred);
-			let temp = it.collect::<HashMap<_, _>>();
-			let it = temp.iter();
 
 			if it.len() <= 0 {
 				return println!( indoc! {"
