@@ -21,9 +21,9 @@ pub fn write_to_index(path: PathBuf, state: ProgramState) {
 pub fn add_tag_to(state: &mut ProgramState, path: PathBuf, tag: &str) {
 	let tag = tag.to_string();
 
-	state.index.entry(path).and_modify(|record|
-		record.tags.push(tag.to_owned())
-	).or_insert(
+	state.index.entry(path).and_modify(|record| {
+		record.tags.insert(tag.to_owned());
+	}).or_insert(
 		YxFileRecord::new(tag.to_owned())
 	);
 }
@@ -109,8 +109,6 @@ pub fn append_tags(state: &mut ProgramState, path_o: PathBuf, path_n: PathBuf) {
 		let [rec_o, rec_n] = got;
 
 		rec_n.tags.extend(rec_o.tags.clone());
-
-		rec_n.tags.dedup();
 	} else {
 		println!("One of those 2 files doesn't exist!");
 	}

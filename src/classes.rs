@@ -2,6 +2,8 @@
 * Structs are stored here to save space in main
 */
 
+use crate::HashSet;
+
 use crate::{HashMap, PathBuf, Serialize, Deserialize};
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -19,13 +21,13 @@ impl ProgramState {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct YxFileRecord {
-	pub tags: Vec<YxTag>
+	pub tags: HashSet<YxTag>
 }
 
 impl YxFileRecord {
 	pub fn new(tag: YxTag) -> Self {
 		YxFileRecord {
-			tags: vec![tag],
+			tags: HashSet::from([tag]),
 		}
 	}
 }
