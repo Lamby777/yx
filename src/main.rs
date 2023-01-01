@@ -160,14 +160,11 @@ fn main() {
 					let mode_str = mode.as_str();
 					match mode_str {
 						"valid" | "missing" => {
-							let it = it.filter(|v|
+							sub::retrieve_where(it, |v| {
 								// if it exists			+ the user wants to find valid
 								// if it doesn't exist	+ the user wants to find missing
 								v.0.exists() == (mode_str == "valid")
-							);
-
-							let temp = it.collect::<HashMap<_, _>>();
-							temp.into_iter()
+							})
 						},
 
 						_ => {

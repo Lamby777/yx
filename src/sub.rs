@@ -100,10 +100,10 @@ pub fn confirm_purge(closest: &PathBuf) -> bool {
 	res == 'y'
 }
 
-pub fn retrieve_where(
-	it: IntoIter<PathBuf, YxFileRecord>,
-	pred: fn(&(PathBuf, YxFileRecord)) -> bool
-) -> IntoIter<PathBuf, YxFileRecord> {
+pub fn retrieve_where<C>(it: IntoIter<PathBuf, YxFileRecord>, pred: C)
+	-> IntoIter<PathBuf, YxFileRecord>
+	where C: Fn(&(PathBuf, YxFileRecord)) -> bool {
+		
 	let it = it.filter(pred);
 
 	let temp = it.collect::<HashMap<_, _>>();
