@@ -5,6 +5,8 @@
 * - Dex, 1:32 AM, 12/30/2022
 */
 
+use std::collections::{HashMap, hash_map::IntoIter};
+
 use crate::{PathBuf, fs, ProgramState, classes::YxFileRecord, indoc, read};
 
 pub fn write_to_index(path: PathBuf, state: ProgramState) {
@@ -96,4 +98,14 @@ pub fn confirm_purge(closest: &PathBuf) -> bool {
 	}
 
 	res == 'y'
+}
+
+pub fn retrieve_where(
+	it: IntoIter<PathBuf, YxFileRecord>,
+	pred: fn(&(PathBuf, YxFileRecord)) -> bool
+) -> IntoIter<PathBuf, YxFileRecord> {
+	let it = it.filter(pred);
+
+	let temp = it.collect::<HashMap<_, _>>();
+	temp.into_iter()
 }
