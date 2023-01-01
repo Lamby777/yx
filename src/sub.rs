@@ -5,7 +5,9 @@
 * - Dex, 1:32 AM, 12/30/2022
 */
 
-use crate::{PathBuf, fs, ProgramState, classes::YxFileRecord};
+use std::collections::{HashMap, hash_map::IntoIter};
+
+use crate::{PathBuf, fs, ProgramState, classes::YxFileRecord, indoc, read};
 
 pub fn write_to_index(path: PathBuf, state: ProgramState) {
 	let ser = serde_json::to_string(&state).unwrap();
@@ -70,4 +72,40 @@ pub fn move_tags(state: &mut ProgramState, path_o: PathBuf, path_n: PathBuf) {
 	} else {
 		println!("Failed to move tag {}; it doesn't exist!", path_o.display());
 	}
+}
+
+pub fn confirm_purge(closest: &PathBuf) -> bool {
+	println!( indoc! {"
+		Are you sure? This will clear out every tag from the index!
+		Just to be clear, you'll be clearing this index:
+		{}
+		(found closest to the current working directory)
+	
+	[Y/N]"}, closest.display());
+	
+	let res: char;
+
+	loop {
+		let res_attempt: String = read!();
+		let res_attempt = res_attempt.to_lowercase().chars().nth(0);
+
+		if let Some(res_n) = res_attempt {
+			res = res_n;
+			break
+		} else {
+			println!("Really? Come on! Type something!");
+		}
+	}
+
+	res == 'y'
+}
+
+pub fn retrieve_where<C>(it: IntoIter<PathBuf, YxFileRecord>, pred: C)
+	-> IntoIter<PathBuf, YxFileRecord>
+	where C: Fn(&(PathBuf, YxFileRecord)) -> bool {
+		
+	let it = it.filter(pred);
+
+	let temp = it.collect::<HashMap<_, _>>();
+	temp.into_iter()
 }
