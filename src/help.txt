@@ -1,4 +1,3 @@
---------------------------------------------------
 yx create
 -	Create an index in the current directory
 yx create <path>
@@ -43,4 +42,3 @@ yx render copy
 -	Copy instead of making hardlinks
 yx render copy named
 -	Copy and then rename the copies
---------------------------------------------------

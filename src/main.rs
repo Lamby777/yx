@@ -18,13 +18,13 @@ use classes::*;
 const INDEX_FILE_NAME: &str	= ".yx_index";
 
 // a shit ton of dashes to split up condensed data
-const LINE_SEPARATOR: &str	= "-----------------------------------";
+const LINE_SEPARATOR: &str	= "--------------------------------------------------";
 
-fn main() -> Result<(), ()> {
+fn main() {
 	// Get command line args
 	let args: Vec<String> = env::args().collect();
 	
-	if args.len() < 2 { return Err(show_help()); }
+	if args.len() < 2 { return show_help(); }
 
 	let cmd = &args[1];		// give the cmd its own binding
 	let args = &args[2..];	// shadow first vec
@@ -129,12 +129,10 @@ fn main() -> Result<(), ()> {
 		// dude has no clue what they're doing 💀
 		_			=> show_help()
 	}
-
-	Ok(())
 }
 
 pub fn show_help() {
-	println!(include_str!("help.txt"));
+	println!("{}\n{}{}\n", LINE_SEPARATOR, include_str!("help.txt"), LINE_SEPARATOR);
 }
 
 pub fn load_state() -> ProgramState {
