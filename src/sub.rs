@@ -117,7 +117,20 @@ pub fn append_tags(state: &mut ProgramState, path_o: PathBuf, path_n: PathBuf) {
 
 // Append to N from O, but remove said tags from O
 pub fn append_tags_rm_old(state: &mut ProgramState, path_o: PathBuf, path_n: PathBuf) {
-	//
+	let index = &mut state.index;
+
+	let got = index.get_many_mut([
+		&path_o, &path_n
+	]);
+
+	if let Some(got) = got {
+		let [rec_o, rec_n] = got;
+
+		rec_n.tags.extend(rec_o.tags.clone());
+		rec_o.tags.clear();
+	} else {
+		println!("One of those 2 files doesn't exist!");
+	}
 }
 
 pub fn confirm_purge(closest: &PathBuf) -> bool {
