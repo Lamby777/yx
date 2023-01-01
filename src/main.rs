@@ -203,8 +203,10 @@ fn main() {
 				let tags = record.tags.join(", ");
 
 				println!("{} >> {tags}", path.display());
-				println!("{}\n", LINE_SEPARATOR);
+				println!("{}", LINE_SEPARATOR);
 			}
+
+			println!();
 		},
 		
 		// dude has no clue what they're doing 💀
