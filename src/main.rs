@@ -63,7 +63,7 @@ fn main() -> Result<(), ()> {
 				&args[1]
 			);
 
-			sub::write_to_index(get_index_path(), st)
+			sub::write_to_index(get_closest_index(), st)
 		},
 
 		"rm"		=> {
@@ -82,7 +82,7 @@ fn main() -> Result<(), ()> {
 				&args[1]
 			);
 
-			sub::write_to_index(get_index_path(), st)
+			sub::write_to_index(get_closest_index(), st)
 		},
 		
 		// dude has no clue what they're doing 💀
@@ -107,7 +107,7 @@ pub fn load_state_unwrap() -> ProgramState {
 }
 
 pub fn load_state() -> Result<ProgramState, std::io::Error> {
-	let res = fs::read_to_string(get_index_path());
+	let res = fs::read_to_string(get_closest_index());
 
 	match res {
 		Ok(content) => Ok(serde_json::from_str(&content).unwrap()),
@@ -116,8 +116,37 @@ pub fn load_state() -> Result<ProgramState, std::io::Error> {
 	}
 }
 
-pub fn get_index_path() -> PathBuf {
-	// make this actually search for stuff in parent folders later
+pub fn get_closest_index() -> PathBuf {
+	get_all_current_indexes()[0].clone()
+}
+
+pub fn get_all_current_indexes() -> Vec<PathBuf> {
+	let mut dir = get_cwd();
+
+	let mut paths: Vec<PathBuf> = vec![];
+
+	// Loop goes backwards, so the result vec is in order
+	// of inner to outer directories.
+	loop {
+		// check if index exists here
+		let index_path = dir.join(INDEX_FILE_NAME);
+
+		if index_path.exists() {
+			// if it does, add it to res
+			paths.push(index_path);
+		}
+
+		let repeat = dir.pop();
+
+		if !repeat { break };
+	}
+
+	paths
+}
+
+pub fn cwd_index_path() -> PathBuf {
+	// this just builds a string for convenience.
+	// use get_closest_index() for finding what to write to
 	get_cwd().join(INDEX_FILE_NAME)
 }
 
