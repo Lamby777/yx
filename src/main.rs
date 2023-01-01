@@ -88,32 +88,19 @@ fn main() {
 
 			let st = load_state();
 
+			let it = st.index.iter();
+
+			if it.len() <= 0 {
+				return println!( indoc! {"
+					{}
+					Index has no entries!
+					Use `yx add <file> <tag>` to get started.
+					{}
+				"}, LINE_SEPARATOR, LINE_SEPARATOR);
+			}
+
+
 			match argc {
-				0 => {
-					// yx list
-
-					let it = st.index.iter();
-
-					if it.len() <= 0 {
-						println!( indoc! {"
-							{}
-							Index has no entries!
-							Use `yx add <file> <tag>` to get started.
-							{}
-						"}, LINE_SEPARATOR, LINE_SEPARATOR);
-					} else {
-						println!("{}", LINE_SEPARATOR);
-
-						// if there are records, print 'em out.
-						for (path, record) in it {
-							let tags = record.tags.join(", ");
-
-							println!("{} >> {tags}", path.display());
-							println!("{}\n", LINE_SEPARATOR);
-						}
-					}
-				},
-				
 				1 => {
 					// yx list missing
 				},
@@ -122,7 +109,18 @@ fn main() {
 					// `yx list by <tag>`
 				},
 
-				_ => () // bruh
+				_ => () // yx list
+			}
+
+			
+			println!("{}", LINE_SEPARATOR);
+
+			// if there are records, print 'em out.
+			for (path, record) in it {
+				let tags = record.tags.join(", ");
+
+				println!("{} >> {tags}", path.display());
+				println!("{}\n", LINE_SEPARATOR);
 			}
 		},
 		
