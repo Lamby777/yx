@@ -93,9 +93,16 @@ fn main() {
 			let it = match argc {
 				1 => {
 					// yx list <missing>
-					match args[0].to_lowercase().as_str() {
-						"missing" => {
-							let it = it.filter(|v| v.0.exists());
+					let mode = args[0].to_lowercase();
+					let mode_str = mode.as_str();
+					match mode_str {
+						"valid" | "missing" => {
+							let it = it.filter(|v|
+								// if it exists			+ the user wants to find valid
+								// if it doesn't exist	+ the user wants to find missing
+								v.0.exists() == (mode_str == "valid")
+							);
+
 							let temp = it.collect::<HashMap<_, _>>();
 							temp.into_iter()
 						},

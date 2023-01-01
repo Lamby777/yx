@@ -5,6 +5,8 @@ yx create <path>
 
 yx list
 -	List all indexed files
+yx list valid
+-	List all indexed files that actually exist
 yx list missing
 -	List all indexed where the file doesn't exist
 yx list by <tag>
