@@ -93,14 +93,17 @@ fn main() {
 			let it = match argc {
 				1 => {
 					// yx list <missing>
-					if &args[0].to_lowercase() == "missing" {
-						let it = it.filter(|v| v.0.exists());
-						let temp = it.collect::<HashMap<_, _>>();
-						temp.into_iter()
-					} else {
-						show_help();
-						panic!("Invalid use of `yx list <arg>`");
-						//panic!("List method {} not found!", &args[0]);
+					match args[0].to_lowercase().as_str() {
+						"missing" => {
+							let it = it.filter(|v| v.0.exists());
+							let temp = it.collect::<HashMap<_, _>>();
+							temp.into_iter()
+						},
+
+						_ => {
+							show_help();
+							panic!("Invalid use of `yx list <arg>`");
+						}
 					}
 				},
 
