@@ -6,6 +6,7 @@
 */
 
 use std::collections::{HashMap, hash_map::IntoIter};
+use crate::LINE_SEPARATOR;
 
 use crate::{PathBuf, fs, ProgramState, classes::YxFileRecord, indoc, read};
 
@@ -121,12 +122,15 @@ pub fn append_tags_rm_old(state: &mut ProgramState, path_o: PathBuf, path_n: Pat
 
 pub fn confirm_purge(closest: &PathBuf) -> bool {
 	println!( indoc! {"
+
+		{}
 		Are you sure? This will clear out every tag from the index!
 		Just to be clear, you'll be clearing this index:
 		{}
 		(found closest to the current working directory)
+		{}
 	
-	[Y/N]"}, closest.display());
+		[Y/N]"}, LINE_SEPARATOR, closest.display(), LINE_SEPARATOR);
 	
 	let res: char;
 
