@@ -84,7 +84,7 @@ fn main() {
 						}
 					}
 
-					if res == 'Y' {
+					if res == 'y' {
 						confirmed = true;
 					}
 				} else {
