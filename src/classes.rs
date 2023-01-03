@@ -2,9 +2,7 @@
 * Structs are stored here to save space in main
 */
 
-use crate::HashSet;
-
-use crate::{HashMap, PathBuf, Serialize, Deserialize};
+use crate::{HashMap, HashSet, PathBuf, Serialize, Deserialize, IntoIter};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ProgramState {
@@ -33,6 +31,7 @@ impl YxFileRecord {
 }
 
 pub type YxTag = String;
+pub type YxIndexIter = IntoIter<PathBuf, YxFileRecord>;
 
 pub struct YxConstraints {
 	//

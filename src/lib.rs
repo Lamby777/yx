@@ -7,7 +7,7 @@ const INDEX_FILE_NAME: &str	= ".yx_index";
 const LINE_SEPARATOR: &str	= "--------------------------------------------------";
 
 use std::{fs, env};
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap, HashSet, hash_map::IntoIter};
 use itertools::Itertools;
 use std::path::PathBuf;
 use serde::{Serialize, Deserialize};

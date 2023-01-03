@@ -5,10 +5,8 @@
 * - Dex, 1:32 AM, 12/30/2022
 */
 
-use std::collections::{HashMap, hash_map::IntoIter};
-use crate::LINE_SEPARATOR;
-
-use crate::{PathBuf, fs, ProgramState, YxFileRecord, indoc, read};
+use crate::{LINE_SEPARATOR, HashMap, YxIndexIter,
+			PathBuf, fs, ProgramState, YxFileRecord, indoc, read};
 
 pub fn write_to_index(path: PathBuf, state: ProgramState) {
 	let ser = serde_json::to_string(&state).unwrap();
@@ -167,8 +165,8 @@ pub fn confirm_purge(closest: &PathBuf) -> bool {
 	res == 'y'
 }
 
-pub fn retrieve_where<C>(it: IntoIter<PathBuf, YxFileRecord>, pred: C)
-	-> IntoIter<PathBuf, YxFileRecord>
+pub fn retrieve_where<C>(it: YxIndexIter, pred: C)
+	-> YxIndexIter
 	where C: Fn(&(PathBuf, YxFileRecord)) -> bool {
 		
 	let it = it.filter(pred);
@@ -177,8 +175,8 @@ pub fn retrieve_where<C>(it: IntoIter<PathBuf, YxFileRecord>, pred: C)
 	temp.into_iter()
 }
 
-pub fn retrieve_by_constraints<C>(it: IntoIter<PathBuf, YxFileRecord>, cons: Vec<C>)
-	-> IntoIter<PathBuf, YxFileRecord>
+pub fn retrieve_by_constraints<C>(it: YxIndexIter, cons: Vec<C>)
+	-> YxIndexIter
 	where C: Fn(&(PathBuf, YxFileRecord)) -> bool {
 	
 	todo!();
