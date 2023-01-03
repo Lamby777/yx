@@ -6,6 +6,7 @@ const INDEX_FILE_NAME: &str	= ".yx_index";
 // a shit ton of dashes to split up condensed data
 const LINE_SEPARATOR: &str	= "--------------------------------------------------";
 
+use std::ops::Deref;
 use std::{fs, env};
 use std::collections::{HashMap, HashSet};
 use itertools::Itertools;
@@ -142,6 +143,32 @@ pub fn start(args: Vec<String>) {
 			);
 
 			sub::write_to_index(get_closest_index().unwrap(), st)
+		},
+
+		"render"	=> {
+			assert_argc(args, &[0, 1, 2]);
+
+			// Get modes from args
+			let (m_copy, m_rename) = match args.len() {
+				0	=> (false, false),
+				_	=> {
+					let args_sl = args.iter().map(|v| v.as_str()).collect::<Vec<&str>>();
+					(
+						args_sl.contains(&"copy"),
+						args_sl.contains(&"named"),
+					)
+				}
+			};
+
+			if m_copy {
+				// Copy files
+			} else {
+				// Create hard links to files
+			}
+
+			if m_rename {
+				// Rename the files
+			}
 		},
 
 		"list"		=> {
