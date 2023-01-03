@@ -6,7 +6,6 @@ const INDEX_FILE_NAME: &str	= ".yx_index";
 // a shit ton of dashes to split up condensed data
 const LINE_SEPARATOR: &str	= "--------------------------------------------------";
 
-use std::ops::Deref;
 use std::{fs, env};
 use std::collections::{HashMap, HashSet};
 use itertools::Itertools;
@@ -126,12 +125,12 @@ pub fn start(args: Vec<String>) {
 			let mut st = load_state();
 
 			let f = match cmd {
-				"mv"		=> sub::move_file_and_tags,
-				"mvt"		=> sub::move_tags,
-				"cp"		=> sub::copy_file_and_tags,
-				"cpt"		=> sub::copy_tags,
-				"apt"		=> sub::append_tags,
-				"mapt"		=> sub::append_tags_rm_old,
+				"mv"		=> sub::fedit::move_file_and_tags,
+				"mvt"		=> sub::fedit::move_tags,
+				"cp"		=> sub::fedit::copy_file_and_tags,
+				"cpt"		=> sub::fedit::copy_tags,
+				"apt"		=> sub::fedit::append_tags,
+				"mapt"		=> sub::fedit::append_tags_rm_old,
 
 				_ => panic!("bruh"),
 			};
@@ -148,6 +147,8 @@ pub fn start(args: Vec<String>) {
 		"render"	=> {
 			assert_argc(args, &[0, 1, 2]);
 
+			let st = load_state();
+
 			// Get modes from args
 			let (m_copy, m_rename) = match args.len() {
 				0	=> (false, false),
@@ -160,15 +161,13 @@ pub fn start(args: Vec<String>) {
 				}
 			};
 
-			if m_copy {
+			(if m_copy {
 				// Copy files
+				sub::render::copied
 			} else {
 				// Create hard links to files
-			}
-
-			if m_rename {
-				// Rename the files
-			}
+				sub::render::hardlinked
+			})(&st, m_rename);
 		},
 
 		"list"		=> {
