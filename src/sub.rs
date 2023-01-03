@@ -8,7 +8,7 @@
 use std::collections::{HashMap, hash_map::IntoIter};
 use crate::LINE_SEPARATOR;
 
-use crate::{PathBuf, fs, ProgramState, classes::YxFileRecord, indoc, read};
+use crate::{PathBuf, fs, ProgramState, YxFileRecord, indoc, read};
 
 pub fn write_to_index(path: PathBuf, state: ProgramState) {
 	let ser = serde_json::to_string(&state).unwrap();
@@ -177,7 +177,12 @@ pub fn retrieve_where<C>(it: IntoIter<PathBuf, YxFileRecord>, pred: C)
 	temp.into_iter()
 }
 
-
+pub fn retrieve_by_constraints<C>(it: IntoIter<PathBuf, YxFileRecord>, cons: Vec<C>)
+	-> IntoIter<PathBuf, YxFileRecord>
+	where C: Fn(&(PathBuf, YxFileRecord)) -> bool {
+	
+	todo!();
+}
 
 pub mod render {
 	use crate::{fs, ProgramState};

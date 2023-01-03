@@ -33,3 +33,7 @@ impl YxFileRecord {
 }
 
 pub type YxTag = String;
+
+pub struct YxConstraints {
+	//
+}
