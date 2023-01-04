@@ -19,6 +19,8 @@ mod sub;
 mod classes;
 use classes::*;
 
+mod constraints;
+
 pub fn start(args: Vec<String>) {
 	if args.len() < 2 { return show_help(); }
 
