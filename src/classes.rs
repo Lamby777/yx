@@ -34,6 +34,7 @@ impl YxFileRecord {
 
 pub type YxTag = String;
 pub type YxIndexIter = IntoIter<PathBuf, YxFileRecord>;
+pub type YxConstraintFilterClosure<'a> = impl Fn(&'a (PathBuf, YxFileRecord)) -> bool;
 
 pub struct YxConstraints {
 	cons: Vec<String>,
@@ -41,14 +42,16 @@ pub struct YxConstraints {
 
 impl YxConstraints {
 	pub fn to_filter_closures<'a>(&'a self)
-	-> Vec<impl Fn(&'a (PathBuf, YxFileRecord)) -> bool> {
-		
+	-> Vec<YxConstraintFilterClosure> {
+
 		self.cons.iter().map(|constraint| {
-			let filter_closure = |record| {
-				true
-			};
+			let filter_closure = YxConstraints::to_filter_closure(constraint);
 
 			filter_closure
 		}).collect::<Vec<_>>()
+	}
+
+	pub fn to_filter_closure(con: &str) -> YxConstraintFilterClosure {
+		|v| {true}
 	}
 }
