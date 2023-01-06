@@ -5,6 +5,7 @@
 use std::ops::Index;
 
 use itertools::Itertools;
+use serde::__private::de::TagContentOtherField;
 
 use crate::{HashMap, HashSet, PathBuf, Serialize, Deserialize, IntoIter};
 
@@ -37,7 +38,8 @@ impl YxFileRecord {
 pub type YxTag = String;
 pub type YxIndexKV = (PathBuf, YxFileRecord);
 pub type YxIndexIter = IntoIter<PathBuf, YxFileRecord>;
-pub type YxConstraintFilterClosure<'a> = impl Fn(&'a YxIndexKV) -> bool;
+pub type YxConstraintFilterClosureI<'a> = impl Fn(&'a YxIndexKV) -> bool;
+pub type YxConstraintFilterClosure = Box<dyn Fn(&YxIndexKV) -> bool>;
 
 pub struct YxConstraints {
 	cons: Vec<String>,
@@ -45,13 +47,14 @@ pub struct YxConstraints {
 
 impl YxConstraints {
 	pub fn to_filter_closures<'a>(&'a self)
-	-> Vec<YxConstraintFilterClosure> {
+	-> Vec<YxConstraintFilterClosureI> {
 
 		self.cons.iter().map(|con| {
 			YxConstraints::to_filter_closure(con)
 		}).collect::<Vec<_>>()
 	}
 
+	// &str -> closure that can be used in a .filter()
 	pub fn to_filter_closure(con: &str) -> YxConstraintFilterClosure {
 		let mut split = con.split(" ");
 
@@ -59,17 +62,31 @@ impl YxConstraints {
 			panic!("Wrong number of arguments in constraint!");
 		}
 
-		let condition = split.next().unwrap().to_lowercase();
-		let matchtype = split.next().unwrap().to_lowercase();
+		let condition	= split.next().unwrap().to_lowercase();
+		let matchtype	= split.next().unwrap().to_lowercase()
+			.split_whitespace().collect::<String>();
+		let tag			= split.next().unwrap().to_lowercase();
 
 		match condition.as_str() {
-			"tag"	=> |v: &YxIndexKV| {
-				let (k,v) = v;
+			"tag"	=> Box::new(move |v: &YxIndexKV| {
+				let (_, rec) = v;
+				
+				let mode = match matchtype.as_str() {
+					"is"		=> true,
 
+					// maybe more complex modes later?
+					"isnot"	|
+					"isnt"	| _	=> false,
+				};
+
+				// "It contains" XOR "User wants it to contain"
+				rec.tags.contains(&tag) == mode
+			}),
+
+			// Don't filter anything if the condition is invalid
+			_		=> Box::new(|v: &YxIndexKV| {
 				true
-			},
-
-			_		=> |v: &YxIndexKV| true,
+			}),
 		}
 	}
 }
