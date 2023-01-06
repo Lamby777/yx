@@ -1,4 +1,5 @@
 #![feature(map_many_mut)]
+#![feature(type_alias_impl_trait)]
 // I have no idea why I have to do this in lib.rs :(
 
 const INDEX_FILE_NAME: &str	= ".yx_index";
@@ -18,6 +19,8 @@ mod sub;
 
 mod classes;
 use classes::*;
+
+mod constraints;
 
 pub fn start(args: Vec<String>) {
 	if args.len() < 2 { return show_help(); }

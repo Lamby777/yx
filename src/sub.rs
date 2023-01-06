@@ -175,13 +175,6 @@ pub fn retrieve_where<C>(it: YxIndexIter, pred: C)
 	temp.into_iter()
 }
 
-pub fn retrieve_by_constraints<C>(it: YxIndexIter, cons: Vec<C>)
-	-> YxIndexIter
-	where C: Fn(&(PathBuf, YxFileRecord)) -> bool {
-	
-	todo!();
-}
-
 pub mod render {
 	use crate::{fs, ProgramState};
 	use super::retrieve_where;
