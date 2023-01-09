@@ -2,22 +2,19 @@
 * Structs are stored here to save space in main
 */
 
-use std::ops::Index;
-
-use itertools::Itertools;
-use serde::__private::de::TagContentOtherField;
-
 use crate::{HashMap, HashSet, PathBuf, Serialize, Deserialize, IntoIter};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ProgramState {
-	pub index: HashMap<PathBuf, YxFileRecord>
+	pub index:			HashMap<PathBuf, YxFileRecord>,
+	pub constraints:	YxConstraints,
 }
 
 impl ProgramState {
 	pub fn new() -> Self {
 		ProgramState {
-			index: HashMap::new(),
+			index:			HashMap::new(),
+			constraints:	YxConstraints { cons: vec![] },
 		}
 	}
 }
@@ -38,14 +35,16 @@ impl YxFileRecord {
 pub type YxTag = String;
 pub type YxIndexKV = (PathBuf, YxFileRecord);
 pub type YxIndexIter = IntoIter<PathBuf, YxFileRecord>;
-pub type YxConstraintFilterClosureI<'a> = impl Fn(&'a YxIndexKV) -> bool;
+pub type YxConstraintFilterClosureI<'a> = impl (Fn(&'a YxIndexKV) -> bool);
 pub type YxConstraintFilterClosure = Box<dyn Fn(&YxIndexKV) -> bool>;
 
+#[derive(Serialize, Deserialize, Debug)]
 pub struct YxConstraints {
-	cons: Vec<String>,
+	pub cons: Vec<String>,
 }
 
 impl YxConstraints {
+	// create a vec of to_filter_closure()'s result on each constraint
 	pub fn to_filter_closures<'a>(&'a self)
 	-> Vec<YxConstraintFilterClosureI> {
 
@@ -84,7 +83,7 @@ impl YxConstraints {
 			}),
 
 			// Don't filter anything if the condition is invalid
-			_		=> Box::new(|v: &YxIndexKV| {
+			_		=> Box::new(|_: &YxIndexKV| {
 				true
 			}),
 		}

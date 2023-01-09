@@ -177,14 +177,15 @@ pub fn retrieve_where<C>(it: YxIndexIter, pred: C)
 
 pub mod render {
 	use crate::{fs, ProgramState};
-	use super::retrieve_where;
+
+use super::retrieve_where;
 
 	pub fn copied(st: &ProgramState, rename: bool) {
 		//
 	}
 
 	pub fn hardlinked(st: &ProgramState, rename: bool) {
-		//fs::hard_link(original, link)
+		//
 	}
 
 	fn rename_to_its_tags() {

@@ -1,14 +1,22 @@
 // Code for implementing `yx constraint` and `yx free` functionality
 
-use crate::{YxIndexIter, YxFileRecord, PathBuf, HashMap};
+use crate::{YxIndexIter, ProgramState, sub::retrieve_where};
 
-pub fn filter_by_constraints<C>(it: &mut YxIndexIter, cons: Option<Vec<C>>)
-	where C: Fn(&(PathBuf, YxFileRecord)) -> bool {
+// Return all record pairs where constraints are followed
+pub fn retrieve_where_constraint(st: &mut ProgramState) -> YxIndexIter {
+	let cl_vec = st.constraints.to_filter_closures();//.clone();
+		
+	retrieve_where(st.index.clone().into_iter(),
+		move |kv| {
+			for filter_fn in &cl_vec {
+				let passes = true;//filter_fn(kv);
 
-	if let Some(cons) = cons {
-		for constraint in cons {
-			let filtered = it.filter(constraint).collect::<HashMap<_, _>>();
-			*it = filtered.into_iter();
+				if !passes {
+					return false
+				}
+			}
+
+			true
 		}
-	}
+	)
 }
