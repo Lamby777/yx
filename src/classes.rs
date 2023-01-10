@@ -36,7 +36,6 @@ pub type YxTag = String;
 pub type YxIndexKV = (PathBuf, YxFileRecord);
 pub type YxIndexIter = IntoIter<PathBuf, YxFileRecord>;
 pub type YxConstraintFilterClosureI<'a> = impl (Fn(&'a YxIndexKV) -> bool);
-pub type YxConstraintFilterClosure = Box<dyn Fn(&YxIndexKV) -> bool>;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct YxConstraints {
@@ -54,38 +53,50 @@ impl YxConstraints {
 	}
 
 	// &str -> closure that can be used in a .filter()
-	pub fn to_filter_closure(con: &str) -> YxConstraintFilterClosure {
+	pub fn to_filter_closure(con: &str) -> YxConstraintFilterClosureI {
 		let mut split = con.split(" ");
 
 		if split.clone().count() != 3 {
 			panic!("Wrong number of arguments in constraint!");
 		}
 
+		let condition	= split.clone().next().unwrap().to_lowercase();
+
+		match condition.as_str() {
+			"tag"	=> constraint_filter_closures::tag,
+
+			// Don't filter anything if the condition is invalid
+			_		=> constraint_filter_closures::return_true,
+		}
+	}
+}
+
+mod constraint_filter_closures {
+    use std::str::Split;
+
+	pub fn tag(split: Split<&str>) -> bool {
 		let condition	= split.next().unwrap().to_lowercase();
 		let matchtype	= split.next().unwrap().to_lowercase()
 			.split_whitespace().collect::<String>();
 		let tag			= split.next().unwrap().to_lowercase();
 
-		match condition.as_str() {
-			"tag"	=> Box::new(move |v: &YxIndexKV| {
-				let (_, rec) = v;
-				
-				let mode = match matchtype.as_str() {
-					"is"		=> true,
+		let (_, rec) = v;
+		
+		let mode = match matchtype.as_str() {
+			"is"		=> true,
 
-					// maybe more complex modes later?
-					"isnot"	|
-					"isnt"	| _	=> false,
-				};
+			// maybe more complex modes later?
+			"isnot"	|
+			"isnt"	| _	=> false,
+		};
 
-				// "It contains" XOR "User wants it to contain"
-				rec.tags.contains(&tag) == mode
-			}),
+		// "It contains" XOR "User wants it to contain"
+		rec.tags.contains(&tag) == mode
+	}
 
-			// Don't filter anything if the condition is invalid
-			_		=> Box::new(|_: &YxIndexKV| {
-				true
-			}),
-		}
+	// used for invalid constraints
+	// maybe change this to just panic instead
+	pub fn return_true(split: Split<&str>) -> bool {
+		true
 	}
 }
