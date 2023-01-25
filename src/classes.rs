@@ -32,11 +32,17 @@ impl YxFileRecord {
 	}
 }
 
-pub type YxTag = String;
-pub type YxIndexKV = (PathBuf, YxFileRecord);
-pub type YxIndexIter = IntoIter<PathBuf, YxFileRecord>;
-pub type YxConstraintFilterClosureI<'a> = impl (Fn(&'a YxIndexKV) -> bool);
-pub type YxConstraintFilterClosure = Box<dyn Fn(&YxIndexKV) -> bool>;
+// Result, but... more like an Option! :D
+pub type IDFC<T>		= Result<T, Box<dyn std::error::Error>>;
+
+// yx types
+pub type YxTag			= String;
+pub type YxIndexKV		= (PathBuf, YxFileRecord);
+pub type YxIndexIter	= IntoIter<PathBuf, YxFileRecord>;
+
+// Closures are weird in Rust :/
+pub type YxConstraintFilterClosureI<'a>	= impl (Fn(&'a YxIndexKV) -> bool);
+pub type YxConstraintFilterClosure		= Box<dyn Fn(&YxIndexKV) -> bool>;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct YxConstraints {

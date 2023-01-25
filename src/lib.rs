@@ -22,8 +22,11 @@ use classes::*;
 
 mod constraints;
 
-pub fn start(args: Vec<String>) {
-	if args.len() < 2 { return show_help(); }
+pub fn start(args: Vec<String>) -> IDFC<()> {
+	if args.len() < 2 {
+		show_help();
+		return Ok(())
+	}
 
 	let cmd = &args[1].to_lowercase();		// give the cmd its own binding
 	let args = &args[2..];	// shadow first vec
@@ -65,7 +68,7 @@ pub fn start(args: Vec<String>) {
 
 			if !confirmed {
 				if args.len() <= 0 {
-					if !sub::confirm_purge(&closest) { return }
+					if !sub::confirm_purge(&closest) { return Ok(()) }
 				} else {
 					show_help();
 					panic!("Invalid use of yx purge!");
@@ -214,12 +217,13 @@ pub fn start(args: Vec<String>) {
 			};
 
 			if it.len() <= 0 {
-				return println!( indoc! {"
+				println!( indoc! {"
 					{}
 					Index has no entries!
 					Use `yx add <file> <tag>` to get started.
 					{}
 				"}, LINE_SEPARATOR, LINE_SEPARATOR);
+				return Ok(())
 			}
 
 			
@@ -239,6 +243,8 @@ pub fn start(args: Vec<String>) {
 		// dude has no clue what they're doing 💀
 		_			=> show_help()
 	}
+
+	Ok(())
 }
 
 pub fn show_help() {
