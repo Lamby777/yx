@@ -6,14 +6,14 @@
 */
 
 use std::path::{Path, PathBuf};
-use crate::{LINE_SEPARATOR, HashMap, YxIndexIter, cwd_index_path,
+use crate::{LINE_SEPARATOR, HashMap, YxIndexIter, get_closest_index,
 			fs, ProgramState, YxFileRecord, indoc, read, IDFC};
 use pathdiff::diff_paths;
 use path_absolutize::*;
 
 // converts any path into a relative path based on the .yx_index location
 pub fn path_relative_to_index<T: AsRef<Path>>(path: T) -> IDFC<PathBuf> {
-	let current_index	= cwd_index_path();
+	let current_index	= get_closest_index().unwrap();
 	let cleaned_path	= path.as_ref().absolutize()?;
 
 	dbg!(&current_index);
