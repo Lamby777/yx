@@ -5,9 +5,30 @@
 * - Dex, 1:32 AM, 12/30/2022
 */
 
-use crate::{LINE_SEPARATOR, HashMap, YxIndexIter,
-			PathBuf, fs, ProgramState, YxFileRecord, indoc, read};
+use std::path::{Path, PathBuf};
+use crate::{LINE_SEPARATOR, HashMap, YxIndexIter, cwd_index_path,
+			fs, ProgramState, YxFileRecord, indoc, read, IDFC};
+use pathdiff::diff_paths;
+use path_absolutize::*;
 
+// converts any path into a relative path based on the .yx_index location
+pub fn path_relative_to_index<T: AsRef<Path>>(path: T) -> IDFC<PathBuf> {
+	let current_index	= cwd_index_path();
+	let cleaned_path	= path.as_ref().absolutize()?;
+
+	dbg!(&current_index);
+	dbg!(&cleaned_path);
+
+	let res = diff_paths(cleaned_path, current_index).ok_or_else(
+		|| "Failed to parse path as relative to index".into()
+	);
+
+	dbg!(&res);
+
+	res
+}
+
+// given program state, write it to the index file to save information
 pub fn write_to_index(path: PathBuf, state: ProgramState) {
 	let ser = serde_json::to_string(&state).unwrap();
 
@@ -17,29 +38,38 @@ pub fn write_to_index(path: PathBuf, state: ProgramState) {
 	}
 }
 
-pub fn add_tag_to(state: &mut ProgramState, path: PathBuf, tag: &str) {
+pub fn add_tag_to(state: &mut ProgramState, path: PathBuf, tag: &str) -> IDFC<()> {
 	let tag = tag.to_string();
 
-	state.index.entry(path).and_modify(|record| {
+	println!("Pre");
+	let path_rel = path_relative_to_index(&path)?;
+	dbg!(&path_rel);
+
+	state.index.entry(path_rel).and_modify(|record| {
 		record.tags.insert(tag.to_owned());
 	}).or_insert(
 		YxFileRecord::new(tag.to_owned())
 	);
+
+	Ok(())
 }
 
-pub fn rm_tag_from(state: &mut ProgramState, path: PathBuf, tag: &str) {
+pub fn rm_tag_from(state: &mut ProgramState, path: PathBuf, tag: &str) -> IDFC<()> {
 	// WILL NOT CHECK IF THE TAG IS THERE!
 	// Use `file_has_tag` first if you need to know.
-
 	let tag = tag.to_string();
+	let path_rel = path_relative_to_index(&path)?;
 
-	state.index.entry(path).and_modify(|record| {
+	state.index.entry(path_rel).and_modify(|record| {
 		record.tags.retain(|v| v.as_str() != tag)
 	});
+
+	Ok(())
 }
 
-pub fn file_has_tag(state: &ProgramState, path: PathBuf, tag: &str) -> bool {
-	let record = state.index.get(&path);
+pub fn file_has_tag(state: &ProgramState, path: PathBuf, tag: &str) -> IDFC<bool> {
+	let path_rel = path_relative_to_index(&path)?;
+	let record = state.index.get(&path_rel);
 
 	if record.is_none() {
 		panic!("File not in index!");
@@ -48,7 +78,7 @@ pub fn file_has_tag(state: &ProgramState, path: PathBuf, tag: &str) -> bool {
 	// shadow with unwrapped value
 	let record = record.unwrap();
 
-	record.tags.contains(&tag.to_string())
+	Ok(record.tags.contains(&tag.to_string()))
 }
 
 pub mod fedit {

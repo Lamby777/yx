@@ -99,7 +99,7 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 				&mut st,
 				(&args[0]).into(),
 				&args[1]
-			);
+			)?;
 
 			sub::write_to_index(get_closest_index().unwrap(), st)
 		},
@@ -110,7 +110,13 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 			let mut st = load_state();
 
 			// If file doesn't have tag, yell at the user :P
-			if !(sub::file_has_tag(&st, (&args[0]).into(), &args[1])) {
+			let has_tag = sub::file_has_tag(
+				&st,
+				(&args[0]).into(),
+				&args[1]
+			)?;
+
+			if !(has_tag) {
 				panic!("File already has this tag!");
 			}
 
@@ -118,7 +124,7 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 				&mut st,
 				(&args[0]).into(),
 				&args[1]
-			);
+			)?;
 
 			sub::write_to_index(get_closest_index().unwrap(), st)
 		},
