@@ -12,20 +12,27 @@ use pathdiff::diff_paths;
 use path_absolutize::*;
 
 // converts any path into a relative path based on the .yx_index location
-pub fn path_relative_to_index<T: AsRef<Path>>(path: T) -> IDFC<PathBuf> {
+pub fn path_relative_to_index<T: AsRef<Path> + std::fmt::Debug>(path: T) -> IDFC<PathBuf> {
 	let current_index	= get_closest_index().unwrap();
 	let cleaned_path	= path.as_ref().absolutize()?;
 
-	dbg!(&current_index);
-	dbg!(&cleaned_path);
-
-	let res = diff_paths(cleaned_path, current_index).ok_or_else(
+	let diff_res = diff_paths(&cleaned_path, &current_index).ok_or_else(
 		|| "Failed to parse path as relative to index".into()
 	);
 
-	dbg!(&res);
+	match diff_res {
+		Err(_)			=> diff_res,
 
-	res
+		Ok(v)	=> {
+			// remove that extra dot which pathdiff adds for some reason
+			let path_as_str = v.to_string_lossy();
+			let mut chars = path_as_str.chars();
+			chars.next();
+
+			let fixed = chars.as_str();
+			Ok(fixed.into())
+		},
+	}
 }
 
 // given program state, write it to the index file to save information
