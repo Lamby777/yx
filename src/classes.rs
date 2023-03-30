@@ -40,6 +40,18 @@ pub type YxTag			= String;
 pub type YxIndexKV		= (PathBuf, YxFileRecord);
 pub type YxIndexIter	= IntoIter<PathBuf, YxFileRecord>;
 
+/// Methods of rendering with `yx render`
+pub enum YxRenderMethod {
+	Hardlink,
+	Copy,
+}
+
+pub struct YxRenderOptions {
+	pub	method:	YxRenderMethod,
+	pub	rename:	bool,
+	pub	iall:	bool,
+}
+
 // Closures are weird in Rust :/
 pub type YxConstraintFilterClosureI<'a>	= impl (Fn(&'a YxIndexKV) -> bool);
 pub type YxConstraintFilterClosure		= Box<dyn Fn(&YxIndexKV) -> bool>;

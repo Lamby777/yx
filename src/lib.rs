@@ -162,24 +162,29 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 			let st = load_state();
 
 			// Get modes from args
-			let (m_copy, m_rename) = match args.len() {
-				0	=> (false, false),
+			let (m_copy, m_rename, m_iall) = match args.len() {
+				0	=> (false, false, false),
 				_	=> {
 					let args_sl = args.iter().map(|v| v.as_str()).collect::<Vec<&str>>();
 					(
 						args_sl.contains(&"copy"),
 						args_sl.contains(&"named"),
+						args_sl.contains(&"iall"), // include all, even outside index
 					)
 				}
 			};
 
-			(if m_copy {
-				// Copy files
-				sub::render::copied
+			let rmethod = if m_copy {
+				YxRenderMethod::Copy
 			} else {
-				// Create hard links to files
-				sub::render::hardlinked
-			})(&st, m_rename);
+				YxRenderMethod::Hardlink
+			};
+
+			sub::render::render(&st, YxRenderOptions {
+				method:	rmethod,
+				rename: m_rename,
+				iall:	m_iall,
+			});
 		},
 
 		"list"		=> {
