@@ -32,7 +32,7 @@ impl YxFileRecord {
 	}
 }
 
-// Result, but... more like an Option! :D
+/// Result, but... more like an Option! :D
 pub type IDFC<T>		= Result<T, Box<dyn std::error::Error>>;
 
 // yx types

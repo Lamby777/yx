@@ -11,7 +11,7 @@ use crate::{LINE_SEPARATOR, HashMap, YxIndexIter, get_closest_index,
 use pathdiff::diff_paths;
 use path_absolutize::*;
 
-// converts any path into a relative path based on the .yx_index location
+/// Converts any path into a relative path based on the .yx_index location
 pub fn path_relative_to_index<T: AsRef<Path> + std::fmt::Debug>(path: T) -> IDFC<PathBuf> {
 	let current_index	= get_closest_index().unwrap();
 	let cleaned_path	= path.as_ref().absolutize()?;
@@ -35,7 +35,7 @@ pub fn path_relative_to_index<T: AsRef<Path> + std::fmt::Debug>(path: T) -> IDFC
 	}
 }
 
-// given program state, write it to the index file to save information
+/// given program state, write it to the index file to save information
 pub fn write_to_index(path: PathBuf, state: ProgramState) {
 	let ser = serde_json::to_string(&state).unwrap();
 

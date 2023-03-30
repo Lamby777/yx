@@ -4,7 +4,7 @@
 
 const INDEX_FILE_NAME: &str	= ".yx_index";
 
-// a shit ton of dashes to split up condensed data
+/// A shit ton of dashes to split up condensed data
 const LINE_SEPARATOR: &str	= "--------------------------------------------------";
 
 use std::{fs, env};
@@ -28,8 +28,8 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 		return Ok(())
 	}
 
-	let cmd = &args[1].to_lowercase();		// give the cmd its own binding
-	let args = &args[2..];	// shadow first vec
+	let cmd = &args[1].to_lowercase();	// give the cmd its own binding
+	let args = &args[2..];			// shadow first vec
 
 	// shadow the String with a &str slice into itself
 	// OR with an alias's full form, if possible
