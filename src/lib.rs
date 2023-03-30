@@ -21,6 +21,7 @@ mod classes;
 use classes::*;
 
 mod constraints;
+mod render;
 
 pub fn start(args: Vec<String>) -> IDFC<()> {
 	if args.len() < 2 {
@@ -180,7 +181,7 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 				YxRenderMethod::Hardlink
 			};
 
-			sub::render::render(&st, YxRenderOptions {
+			render::render(&st, YxRenderOptions {
 				method:	rmethod,
 				rename: m_rename,
 				iall:	m_iall,

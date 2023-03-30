@@ -203,57 +203,12 @@ pub fn confirm_purge(closest: &PathBuf) -> bool {
 }
 
 /// Get all files matching predicate
-pub fn retrieve_where<C>(it: YxIndexIter, pred: C)
-	-> YxIndexIter
-	where C: Fn(&(PathBuf, YxFileRecord)) -> bool {
+pub fn retrieve_where<C>(it: YxIndexIter, pred: C) -> YxIndexIter
+	where C: Fn(&(PathBuf, YxFileRecord)) -> bool
+{
 		
 	let it = it.filter(pred);
 
 	let temp = it.collect::<HashMap<_, _>>();
 	temp.into_iter()
-}
-
-pub mod render {
-	use crate::{ProgramState, classes::{YxRenderMethod, YxRenderOptions}};
-	use super::retrieve_where;
-	use walkdir::WalkDir;
-
-	pub fn render(st: &ProgramState, options: YxRenderOptions) {
-		let files = get_files(
-			if options.iall { Some(&st) } else { None },
-			&options.iall
-		);
-
-		(match &options.method {
-			YxRenderMethod::Copy		=> {
-				copy_over
-			},
-
-			YxRenderMethod::Hardlink	=> {
-				hardlink_over
-			},
-		})(&options.rename);
-	}
-	
-	fn get_files(st: Option<&ProgramState>, iall: &bool) {
-		todo!()
-		
-//		let walk = WalkDir::new();
-
-//		let filtered = walk.into_iter().filter_map(|path| {
-//			path.ok()
-//		});
-	}
-
-	fn copy_over(rename: &bool) {
-		//
-	}
-
-	fn hardlink_over(rename: &bool) {
-		//
-	}
-
-	fn rename_to_its_tags() {
-		//
-	}
 }
