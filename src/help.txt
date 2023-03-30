@@ -26,6 +26,16 @@ yx add <file> <tag>
 yx rm <file> <tag>
 -	Untag a file
 
+yx register <file(s)>
+-	Register file in index without adding tags
+yx rall
+-	Register all files in current working directory recursively
+yx rall <path>
+-	Register all files recursively at the given path
+yx rfits <path>
+-	Runs `yx rall` but only on files that fit the current constraints.
+(Some contraints which require indexed file data will be skipped)
+
 yx constraint <constraint>
 - Limit future work to any files that match constraint
 yx free
