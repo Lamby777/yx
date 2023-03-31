@@ -24,6 +24,22 @@ pub use classes::IDFC;
 mod constraints;
 mod render;
 
+mod cli {
+    use std::path::Path;
+    use crate::classes::ProgramState;
+	use crate::sub;
+
+	pub fn c_create(asref: impl AsRef<Path>) {
+		let path = asref.as_ref();
+		if path.exists() {
+			panic!("An index already exists here! Consider deleting it.");
+		}
+
+		// Fails to compile -- fix by changing PathBuf parameter to &Path
+		sub::write_to_index(path, ProgramState::new());
+	}
+}
+
 pub fn start(args: Vec<String>) -> IDFC<()> {
 	if args.len() < 2 {
 		show_help();
@@ -41,20 +57,14 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 		"create"	=> {
 			assert_argc(args, &[0, 1]);
 
-			let path: PathBuf;
-			
-			if args.len() < 1 {
-				// current working dir
-				path = get_cwd().join(INDEX_FILE_NAME);
-			} else {
-				path = PathBuf::from(&args[0]);
-			}
-
-			if path.exists() {
-				panic!("An index already exists here! Consider deleting it.");
-			}
-
-			sub::write_to_index(path, ProgramState::new());
+			cli::c_create(
+				if args.len() < 1 {
+					// current working dir
+					get_cwd().join(INDEX_FILE_NAME)
+				} else {
+					PathBuf::from(&args[0])
+				}
+			);
 		},
 
 		"purge"		=> {
