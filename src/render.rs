@@ -42,18 +42,19 @@ pub fn render(st: &ProgramState, options: YxRenderOptions) -> IDFC<()> {
 }
 
 fn change_folder_name(path: &Path) -> OsString {
-/*	let mut segments: Vec<&OsStr> = path.iter().collect();
+	let mut segments: Vec<&OsStr> = path.iter().collect();
 	// index of second to last element
 	let stli = segments.len() - 2;
 
+	// Cow<str> goes moo! :D
 	let old_folder_name =
 		segments[stli].to_string_lossy() + ".yx-render";
 	let new_folder_name = old_folder_name.as_ref();
 
 	segments[stli] = OsStr::new(new_folder_name);
 
-	segments.join(OsStr::new(""))*/
-	todo!()
+	// join parts back into res
+	segments.join(OsStr::new(""))
 }
 
 fn rename_to_tags() {

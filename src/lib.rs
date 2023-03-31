@@ -37,6 +37,17 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 	let cmd = cmd_replace_aliases(cmd);
 
 	match cmd {
+		"ts"		=> {
+			// testing stuff
+			let mut path1 = env::current_dir()?;
+			path1.push("test1");
+
+			let diff =
+				pathdiff::diff_paths(path1, get_closest_index().unwrap());
+
+			dbg!(&diff);
+		},
+
 		"create"	=> {
 			assert_argc(args, &[0, 1]);
 
