@@ -4,8 +4,9 @@
 **/
 
 use std::env::args;
+use yx::IDFC;
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() -> IDFC<()> {
 	// Get command line args
 	yx::start(args().collect::<Vec<String>>())
 }

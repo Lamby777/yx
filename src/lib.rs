@@ -19,6 +19,7 @@ mod sub;
 
 mod classes;
 use classes::*;
+pub use classes::IDFC;
 
 mod constraints;
 mod render;
