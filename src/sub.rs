@@ -12,7 +12,7 @@ use pathdiff::diff_paths;
 use path_absolutize::*;
 
 /// Converts any path into a relative path based on the .yx_index location
-pub fn path_relative_to_index<T: AsRef<Path> + std::fmt::Debug>(path: T) -> IDFC<PathBuf> {
+pub fn path_relative_to_index(path: impl AsRef<Path>) -> IDFC<PathBuf> {
 	let mut current_index	= get_closest_index().unwrap();
 	current_index.pop();
 	
