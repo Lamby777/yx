@@ -13,26 +13,26 @@ use path_absolutize::*;
 
 /// Converts any path into a relative path based on the .yx_index location
 pub fn path_relative_to_index<T: AsRef<Path> + std::fmt::Debug>(path: T) -> IDFC<PathBuf> {
-	let current_index	= get_closest_index().unwrap();
+	let mut current_index	= get_closest_index().unwrap();
+	current_index.pop();
+	
 	let cleaned_path	= path.as_ref().absolutize()?;
+	let fname = cleaned_path.file_name().ok_or_else(
+		|| "Could not get file name"
+	)?;
+	
+	let cleaned_path_parent = cleaned_path.parent().ok_or_else(
+		|| "Could not get path parent"
+	)?;
 
-	let diff_res = diff_paths(&cleaned_path, &current_index).ok_or_else(
-		|| "Failed to parse path as relative to index".into()
-	);
+	let mut res =
+		diff_paths(&cleaned_path_parent, &current_index).ok_or_else(
+			|| "Failed to parse path as relative to index"
+		)?;
+	
+	res.push(fname);
 
-	match diff_res {
-		Err(_)			=> diff_res,
-
-		Ok(v)	=> {
-			// remove that extra dot which pathdiff adds for some reason
-			let path_as_str = v.to_string_lossy();
-			let mut chars = path_as_str.chars();
-			chars.next();
-
-			let fixed = chars.as_str();
-			Ok(fixed.into())
-		},
-	}
+	Ok(res)
 }
 
 /// given program state, write it to the index file to save information
