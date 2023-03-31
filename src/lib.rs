@@ -186,17 +186,24 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 				}
 			};
 
-			let rmethod = if m_copy {
+			let render_method = if m_copy {
 				YxRenderMethod::Copy
 			} else {
 				YxRenderMethod::Hardlink
 			};
 
-			render::render(&st, YxRenderOptions {
-				method:	rmethod,
+			let res = render::render(&st, YxRenderOptions {
+				method:	render_method,
 				rename: m_rename,
 				iall:	m_iall,
 			});
+
+			if let Err(e) = res {
+				println!("There was an error while rendering.");
+				return Err(e)
+			} else {
+				println!("Rendered successfully!");
+			}
 		},
 
 		"list"		=> {

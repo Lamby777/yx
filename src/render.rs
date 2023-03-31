@@ -1,6 +1,5 @@
-use std::{fs, ffi::{OsStr, OsString}, path::Path};
+use std::{fs, ffi::{OsStr, OsString}, path::{Path}};
 use crate::{ProgramState, classes::{YxRenderMethod, YxRenderOptions, IDFC}, get_closest_index};
-use walkdir::WalkDir;
 
 pub fn render(st: &ProgramState, options: YxRenderOptions) -> IDFC<()> {
 	let files =
@@ -10,7 +9,7 @@ pub fn render(st: &ProgramState, options: YxRenderOptions) -> IDFC<()> {
 				fpath.exists()
 			});
 
-	for (path, data) in files {
+	for (ref path, _data) in files {
 		match &options.method {
 			YxRenderMethod::Copy		=> {
 				// Get old name
@@ -27,8 +26,8 @@ pub fn render(st: &ProgramState, options: YxRenderOptions) -> IDFC<()> {
 				
 				let res = fs::copy(path, new_path);
 
-				if let Err(e) = res {
-					println!("Failed to render ")
+				if let Err(_) = res {
+					println!("Failed to render file at {:?}", path);
 				}
 			},
 
@@ -41,7 +40,7 @@ pub fn render(st: &ProgramState, options: YxRenderOptions) -> IDFC<()> {
 	Ok(())
 }
 
-fn change_folder_name(path: &Path) -> OsString {
+fn _change_folder_name(path: &Path) -> OsString {
 	let mut segments: Vec<&OsStr> = path.iter().collect();
 	// index of second to last element
 	let stli = segments.len() - 2;
@@ -57,6 +56,6 @@ fn change_folder_name(path: &Path) -> OsString {
 	segments.join(OsStr::new(""))
 }
 
-fn rename_to_tags() {
+fn _rename_to_tags() {
 	//
 }

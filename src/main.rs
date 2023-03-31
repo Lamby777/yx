@@ -5,7 +5,7 @@
 
 use std::env::args;
 
-fn main() {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
 	// Get command line args
-	yx::start(args().collect::<Vec<String>>());
+	yx::start(args().collect::<Vec<String>>())
 }
