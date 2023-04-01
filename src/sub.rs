@@ -47,10 +47,7 @@ pub fn write_to_index(path: &Path, state: &ProgramState) {
 
 pub fn add_tag_to(state: &mut ProgramState, path: PathBuf, tag: &str) -> IDFC<()> {
 	let tag = tag.to_string();
-
-	println!("Pre");
 	let path_rel = path_relative_to_index(&path)?;
-	dbg!(&path_rel);
 
 	state.index.entry(path_rel).and_modify(|record| {
 		record.tags.insert(tag.to_owned());
