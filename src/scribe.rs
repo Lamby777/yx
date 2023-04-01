@@ -2,25 +2,30 @@
 * Module for stuff in `yx scribe`
 */
 
+use std::path::Path;
 use walkdir::WalkDir;
-use crate::{classes::ProgramStatePathed, sub::add_tags_to, IDFC};
+use crate::{classes::{ProgramState}, sub::add_tags_to, IDFC};
 
 pub enum ScribeMethod<'a> {
 	SplitBy(&'a str),
 }
 
-pub fn import_from_names(st: &mut ProgramStatePathed, method: ScribeMethod) -> IDFC<()> {
-	for entry in WalkDir::new(&st.path) {
+pub fn import_from_names(
+	st: &mut ProgramState,
+	target: impl AsRef<Path>,
+	method: ScribeMethod
+) -> IDFC<()> {
+	for entry in WalkDir::new(&target) {
 		match entry {
 			Err(e)	=> {
-				println!("Error walking file in dir {:?}... {}", &st.path, e);
+				println!("Error walking file in dir {:?}... {}", target.as_ref(), e);
 			}
 
 			Ok(i)	=> {
 				let fname = i.file_name().to_string_lossy();
 				let tags = process_into_tags(fname.as_ref(), &method);
 
-				add_tags_to(&mut st.state, &st.path, &tags)?;
+				add_tags_to(st, target.as_ref(), &tags)?;
 			}
 		}
 	}
