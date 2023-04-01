@@ -305,9 +305,11 @@ pub fn load_state() -> IDFC<ProgramState> {
 	let index = index.unwrap();
 
 	let res = fs::read_to_string(index)?;
-
-	Ok(
-		serde_json::from_str(&res)?
+	serde_json::from_str::<ProgramState>(&res).map_err(
+		|e| {
+			println!("Failed to parse index... Did you recently do an update?");
+			e.into()
+		}
 	)
 }
 
