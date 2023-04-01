@@ -168,7 +168,9 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 			)?;
 
 			if !has_tag {
-				panic!("File already has this tag!");
+				return Err(
+					"File doesn't have this tag!".into()
+				);
 			}
 
 			cli::c_remove(
