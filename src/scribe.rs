@@ -22,8 +22,14 @@ pub fn import_from_names(
 			}
 
 			Ok(i)	=> {
-				let fname = i.file_name().to_string_lossy();
+				if i.path() == target.as_ref() { continue; }
+
+				let fname = i.path().file_stem().ok_or_else(
+					|| "No file name"
+				)?.to_string_lossy();
+
 				let tags = process_into_tags(fname.as_ref(), &method);
+				dbg!(&fname, &tags);
 
 				add_tags_to(st, target.as_ref(), &tags)?;
 			}
