@@ -15,14 +15,15 @@ use serde::{Serialize, Deserialize};
 use indoc::indoc;
 use text_io::read;
 
-mod sub;
 
 mod classes;
 use classes::*;
 pub use classes::IDFC;
 
+mod sub;
 mod constraints;
 mod render;
+mod scribe;
 
 mod cli {
     use std::collections::HashMap;
