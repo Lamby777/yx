@@ -221,12 +221,15 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 		"scribe"	=> {
 			assert_argc(args, &[0, 1]);
 
+			let st = &mut load_state_only()?;
 			let target = args.get(0).unwrap_or(&".");
 
 			c_scribe(
-				&mut load_state_only()?,
+				st,
 				target,
 			)?;
+
+			sub::write_to_index(&get_closest_index().unwrap(), &st)?
 		},
 
 		"render"	=> {
