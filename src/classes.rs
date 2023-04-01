@@ -2,7 +2,24 @@
 * Structs are stored here to save space in main
 */
 
-use crate::{HashMap, HashSet, PathBuf, Serialize, Deserialize, IntoIter};
+use crate::{HashMap, HashSet, PathBuf, Serialize, Deserialize, IntoIter, parse_index_at};
+
+#[derive(Debug)]
+pub struct ProgramStatePathed {
+	pub	path:	PathBuf,
+	pub	state:	ProgramState,
+}
+
+impl ProgramStatePathed {
+	pub fn from_path(path: PathBuf) -> IDFC<Self> {
+		let state = parse_index_at(&path)?;
+
+		Ok(Self {
+			path:	path,
+			state:	state,
+		})
+	}
+}
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ProgramState {
@@ -25,20 +42,32 @@ pub struct YxFileRecord {
 }
 
 impl YxFileRecord {
-	pub fn new(tag: YxTag) -> Self {
+	pub fn new(tags: &[YxTag]) -> Self {
 		YxFileRecord {
-			tags: HashSet::from([tag]),
+			tags: tags.iter().cloned().collect(),
 		}
 	}
 }
 
-// Result, but... more like an Option! :D
+/// Result, but... more like an Option! :D
 pub type IDFC<T>		= Result<T, Box<dyn std::error::Error>>;
 
 // yx types
 pub type YxTag			= String;
 pub type YxIndexKV		= (PathBuf, YxFileRecord);
 pub type YxIndexIter	= IntoIter<PathBuf, YxFileRecord>;
+
+/// Methods of rendering with `yx render`
+pub enum YxRenderMethod {
+	Hardlink,
+	Copy,
+}
+
+pub struct YxRenderOptions {
+	pub	method:	YxRenderMethod,
+	pub	rename:	bool,
+	pub	iall:	bool,
+}
 
 // Closures are weird in Rust :/
 pub type YxConstraintFilterClosureI<'a>	= impl (Fn(&'a YxIndexKV) -> bool);

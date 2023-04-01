@@ -4,8 +4,9 @@
 **/
 
 use std::env::args;
+use yx::IDFC;
 
-fn main() {
+fn main() -> IDFC<()> {
 	// Get command line args
-	yx::start(args().collect::<Vec<String>>());
+	yx::start(args().collect::<Vec<String>>())
 }

@@ -5,50 +5,84 @@
 * - Dex, 1:32 AM, 12/30/2022
 */
 
-use crate::{LINE_SEPARATOR, HashMap, YxIndexIter,
-			PathBuf, fs, ProgramState, YxFileRecord, indoc, read};
+use std::{fs, path::{Path, PathBuf}};
+use crate::{HashMap, YxIndexIter, get_closest_index,
+			ProgramState, YxFileRecord, IDFC};
+use pathdiff::diff_paths;
+use path_absolutize::*;
 
-pub fn write_to_index(path: PathBuf, state: ProgramState) {
+/// Converts any path into a relative path based on the .yx_index location
+pub fn path_relative_to_index(path: impl AsRef<Path>) -> IDFC<PathBuf> {
+	let mut current_index	= get_closest_index().unwrap();
+	current_index.pop();
+	
+	let cleaned_path	= path.as_ref().absolutize()?;
+	let fname = cleaned_path.file_name().ok_or_else(
+		|| "Could not get file name"
+	)?;
+	
+	let cleaned_path_parent = cleaned_path.parent().ok_or_else(
+		|| "Could not get path parent"
+	)?;
+
+	let mut res =
+		diff_paths(&cleaned_path_parent, &current_index).ok_or_else(
+			|| "Failed to parse path as relative to index"
+		)?;
+	
+	res.push(fname);
+
+	Ok(res)
+}
+
+/// given program state, write it to the index file to save information
+pub fn write_to_index(path: &Path, state: &ProgramState) -> IDFC<()> {
 	let ser = serde_json::to_string(&state).unwrap();
 
 	// Make the file
-	if let Err(_) = fs::write(&path, ser) {
-		panic!("Failed to write to {:?}!", path);
-	}
+	fs::write(&path, ser).map_err(|e| {
+		println!("Failed to write to {:?}!", path);
+		e.into()
+	})
 }
 
-pub fn add_tag_to(state: &mut ProgramState, path: PathBuf, tag: &str) {
-	let tag = tag.to_string();
+pub fn add_tags_to(state: &mut ProgramState, path: &Path, tags: &[&str]) -> IDFC<()> {
+	let path_rel = path_relative_to_index(&path)?;
 
-	state.index.entry(path).and_modify(|record| {
-		record.tags.insert(tag.to_owned());
-	}).or_insert(
-		YxFileRecord::new(tag.to_owned())
-	);
+	
+	let mapped = tags.iter()
+		.map(|s| s.to_string());
+
+	state.index.entry(path_rel).and_modify(|record| {
+		record.tags.extend(mapped.clone());
+	}).or_insert({
+		YxFileRecord::new(
+			&mapped.collect::<Vec<String>>()
+		)
+	});
+
+	Ok(())
 }
 
-pub fn rm_tag_from(state: &mut ProgramState, path: PathBuf, tag: &str) {
+pub fn rm_tags_from(state: &mut ProgramState, path: &Path, tags: &[&str]) -> IDFC<()> {
 	// WILL NOT CHECK IF THE TAG IS THERE!
 	// Use `file_has_tag` first if you need to know.
+	let path_rel = path_relative_to_index(&path)?;
 
-	let tag = tag.to_string();
-
-	state.index.entry(path).and_modify(|record| {
-		record.tags.retain(|v| v.as_str() != tag)
+	state.index.entry(path_rel).and_modify(|record| {
+		record.tags.retain(|v| !(tags.contains(&v.as_str())));
 	});
+
+	Ok(())
 }
 
-pub fn file_has_tag(state: &ProgramState, path: PathBuf, tag: &str) -> bool {
-	let record = state.index.get(&path);
+pub fn file_has_tag(state: &ProgramState, path: PathBuf, tag: &str) -> IDFC<bool> {
+	let path_rel = path_relative_to_index(&path)?;
+	let record = state.index.get(&path_rel).ok_or_else(
+		|| "File not in index!"
+	)?;
 
-	if record.is_none() {
-		panic!("File not in index!");
-	}
-
-	// shadow with unwrapped value
-	let record = record.unwrap();
-
-	record.tags.contains(&tag.to_string())
+	Ok(record.tags.contains(&tag.to_string()))
 }
 
 pub mod fedit {
@@ -136,59 +170,13 @@ pub mod fedit {
 	}
 }
 
-pub fn confirm_purge(closest: &PathBuf) -> bool {
-	println!( indoc! {"
-
-		{}
-		Are you sure? This will clear out every tag from the index!
-		Just to be clear, you'll be clearing this index:
-		{}
-		(found closest to the current working directory)
-		{}
-	
-		[Y/N]"}, LINE_SEPARATOR, closest.display(), LINE_SEPARATOR);
-	
-	let res: char;
-
-	loop {
-		let res_attempt: String = read!();
-		let res_attempt = res_attempt.to_lowercase().chars().nth(0);
-
-		if let Some(res_n) = res_attempt {
-			res = res_n;
-			break
-		} else {
-			println!("Really? Come on! Type something!");
-		}
-	}
-
-	res == 'y'
-}
-
-pub fn retrieve_where<C>(it: YxIndexIter, pred: C)
-	-> YxIndexIter
-	where C: Fn(&(PathBuf, YxFileRecord)) -> bool {
+/// Get all files matching predicate
+pub fn retrieve_where<C>(it: YxIndexIter, pred: C) -> YxIndexIter
+	where C: Fn(&(PathBuf, YxFileRecord)) -> bool
+{
 		
 	let it = it.filter(pred);
 
 	let temp = it.collect::<HashMap<_, _>>();
 	temp.into_iter()
-}
-
-pub mod render {
-	use crate::{fs, ProgramState};
-
-use super::retrieve_where;
-
-	pub fn copied(st: &ProgramState, rename: bool) {
-		//
-	}
-
-	pub fn hardlinked(st: &ProgramState, rename: bool) {
-		//
-	}
-
-	fn rename_to_its_tags() {
-		//
-	}
 }
