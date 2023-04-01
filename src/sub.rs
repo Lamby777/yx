@@ -59,7 +59,7 @@ pub fn add_tag_to(state: &mut ProgramState, path: &Path, tag: &str) -> IDFC<()> 
 	Ok(())
 }
 
-pub fn rm_tag_from(state: &mut ProgramState, path: PathBuf, tag: &str) -> IDFC<bool> {
+pub fn rm_tag_from(state: &mut ProgramState, path: &Path, tag: &str) -> IDFC<bool> {
 	// WILL NOT CHECK IF THE TAG IS THERE!
 	// Use `file_has_tag` first if you need to know.
 	let tag = tag.to_string();

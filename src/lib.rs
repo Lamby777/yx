@@ -46,8 +46,6 @@ mod cli {
 		sub::write_to_index(&st.path, &st.state)
 	}
 
-	// TODO: WRAPPER CLASS TO KEEP TRACK OF PATH FOR PROGRAMSTATE
-
 	pub fn c_add(
 		st: &mut ProgramStatePathed,
 		target: impl AsRef<Path>,
@@ -59,6 +57,20 @@ mod cli {
 			tags[0].as_ref()
 		)?;
 
+		sub::write_to_index(&st.path, &st.state)
+	}
+
+	pub fn c_remove(
+		st: &mut ProgramStatePathed,
+		target: impl AsRef<Path>,
+		tags: &[impl AsRef<str>],
+	) -> IDFC<()> {
+		sub::rm_tag_from(
+			&mut st.state,
+			target.as_ref(),
+			tags[0].as_ref()
+		)?;
+		
 		sub::write_to_index(&st.path, &st.state)
 	}
 }
@@ -146,26 +158,24 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 		"rm"		=> {
 			assert_argc(args, &[2]);
 
-			let mut st = load_state_only()?;
+			let mut st = load_state_and_path()?;
 
 			// If file doesn't have tag, yell at the user :P
 			let has_tag = sub::file_has_tag(
-				&st,
+				&st.state,
 				(&args[0]).into(),
 				&args[1]
 			)?;
 
-			if !(has_tag) {
+			if !has_tag {
 				panic!("File already has this tag!");
 			}
 
-			sub::rm_tag_from(
+			cli::c_remove(
 				&mut st,
-				(&args[0]).into(),
-				&args[1]
+				&args[0],
+				&args[1..]
 			)?;
-
-			sub::write_to_index(&get_closest_index().unwrap(), &st)?
 		},
 
 		"mv"	| "mvt"	|
