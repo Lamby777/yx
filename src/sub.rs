@@ -36,7 +36,7 @@ pub fn path_relative_to_index(path: impl AsRef<Path>) -> IDFC<PathBuf> {
 }
 
 /// given program state, write it to the index file to save information
-pub fn write_to_index(path: &Path, state: ProgramState) {
+pub fn write_to_index(path: &Path, state: &ProgramState) {
 	let ser = serde_json::to_string(&state).unwrap();
 
 	// Make the file

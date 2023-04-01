@@ -25,6 +25,7 @@ mod constraints;
 mod render;
 
 mod cli {
+    use std::collections::HashMap;
     use std::path::Path;
     use crate::classes::ProgramState;
 	use crate::sub;
@@ -35,7 +36,14 @@ mod cli {
 			panic!("An index already exists here! Consider deleting it.");
 		}
 
-		sub::write_to_index(path, ProgramState::new());
+		sub::write_to_index(path, &ProgramState::new());
+	}
+
+	// Be careful!
+	pub fn c_purge(path: &Path, state: &mut ProgramState) {
+		state.index = HashMap::new();
+
+		sub::write_to_index(&path, state);
 	}
 }
 
@@ -89,15 +97,11 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 			// are they gone yet?
 
 			// ok cool, they're gone.
+			let mut st = load_state();
+			cli::c_purge(&closest, &mut st);
 
 			// at long last, we purge the tags, because
 			// no one with any regrets would get this far.
-
-			let mut st = load_state();
-			st.index = HashMap::new();
-
-			sub::write_to_index(&closest, st);
-
 			// that wasn't so hard, was it?
 		},
 
@@ -112,7 +116,7 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 				&args[1]
 			)?;
 
-			sub::write_to_index(&get_closest_index().unwrap(), st)
+			sub::write_to_index(&get_closest_index().unwrap(), &st)
 		},
 
 		"rm"		=> {
@@ -137,7 +141,7 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 				&args[1]
 			)?;
 
-			sub::write_to_index(&get_closest_index().unwrap(), st)
+			sub::write_to_index(&get_closest_index().unwrap(), &st)
 		},
 
 		"mv"	| "mvt"	|
@@ -164,7 +168,7 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 				(&args[1]).into()
 			);
 
-			sub::write_to_index(&get_closest_index().unwrap(), st)
+			sub::write_to_index(&get_closest_index().unwrap(), &st)
 		},
 
 		"render"	=> {
