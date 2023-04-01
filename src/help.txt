@@ -54,3 +54,6 @@ yx render copy
 -	Copy instead of making hardlinks
 yx render copy named
 -	Copy and then rename the copies
+
+yx scribe
+-	Sorta the opposite of `yx render named`. Uses file names to create tags.

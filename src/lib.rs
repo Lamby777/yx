@@ -9,26 +9,28 @@ const LINE_SEPARATOR: &str	= "--------------------------------------------------
 
 use std::{fs, env};
 use std::collections::{HashMap, HashSet, hash_map::IntoIter};
+use cli::c_scribe;
 use itertools::Itertools;
 use std::path::{PathBuf, Path};
 use serde::{Serialize, Deserialize};
 use indoc::indoc;
 use text_io::read;
 
-mod sub;
 
 mod classes;
 use classes::*;
 pub use classes::IDFC;
 
+mod sub;
 mod constraints;
 mod render;
+mod scribe;
 
 mod cli {
     use std::collections::HashMap;
     use std::path::Path;
     use crate::classes::{ProgramState, ProgramStatePathed};
-	use crate::{sub, IDFC};
+	use crate::{sub, IDFC, scribe};
 
 	pub fn c_create(pathable: impl AsRef<Path>) -> IDFC<()> {
 		let path = pathable.as_ref();
@@ -73,6 +75,13 @@ mod cli {
 		
 		sub::write_to_index(&st.path, &st.state)
 	}
+
+	pub fn c_scribe(
+		st: &mut ProgramState,
+		target: impl AsRef<Path>
+	) -> IDFC<()> {
+		scribe::import_from_names(st, target, scribe::ScribeMethod::SplitBy(" "))
+	}
 }
 
 pub fn start(args: Vec<String>) -> IDFC<()> {
@@ -81,8 +90,11 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 		return Ok(())
 	}
 
-	let cmd = &args[1].to_lowercase();	// give the cmd its own binding
-	let args = &args[2..];			// shadow first vec
+	let cmd	= &args[1].to_lowercase();
+	let args: &[&str]	= &args[2..].iter()
+							.map(|s| s.as_str())
+							.collect::<Vec<&str>>();
+
 
 	// shadow the String with a &str slice into itself
 	// OR with an alias's full form, if possible
@@ -148,12 +160,10 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 		"add"		=> {
 			assert_argc(args, &[2]);
 
-			let tags: &[&str] = &args[1..].iter().map(|s| s.as_str()).collect::<Vec<&str>>();
-
 			cli::c_add(
 				&mut load_state_and_path()?,
 				&args[0],
-				&tags,
+				&args[1..],
 			)?;
 		},
 
@@ -174,13 +184,11 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 					"File doesn't have this tag!".into()
 				);
 			}
-			
-			let tags: &[&str] = &args[1..].iter().map(|s| s.as_str()).collect::<Vec<&str>>();
 
 			cli::c_remove(
 				&mut st,
 				&args[0],
-				&tags,
+				&args[1..],
 			)?;
 		},
 
@@ -210,6 +218,20 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 			sub::write_to_index(&get_closest_index().unwrap(), &st)?
 		},
 
+		"scribe"	=> {
+			assert_argc(args, &[0, 1]);
+
+			let st = &mut load_state_only()?;
+			let target = args.get(0).unwrap_or(&".");
+
+			c_scribe(
+				st,
+				target,
+			)?;
+
+			sub::write_to_index(&get_closest_index().unwrap(), &st)?
+		},
+
 		"render"	=> {
 			assert_argc(args, &[0, 1, 2]);
 
@@ -219,11 +241,10 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 			let (m_copy, m_rename, m_iall) = match args.len() {
 				0	=> (false, false, false),
 				_	=> {
-					let args_sl = args.iter().map(|v| v.as_str()).collect::<Vec<&str>>();
 					(
-						args_sl.contains(&"copy"),
-						args_sl.contains(&"named"),
-						args_sl.contains(&"iall"), // include all, even outside index
+						args.contains(&"copy"),
+						args.contains(&"named"),
+						args.contains(&"iall"), // include all, even outside index
 					)
 				}
 			};
@@ -398,7 +419,7 @@ pub fn get_cwd() -> PathBuf {
 	env::current_dir().expect("Error getting current directory")
 }
 
-pub fn assert_argc(args: &[String], lens: &[usize]) {
+pub fn assert_argc(args: &[&str], lens: &[usize]) {
 	let len = args.len();
 
 	let mapped: Vec<String> = lens.iter().map(|&id| id.to_string()).collect();
