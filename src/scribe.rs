@@ -17,11 +17,15 @@ pub fn import_from_names(
 ) -> IDFC<()> {
 	let walker =
 		WalkDir::new(&target).into_iter()
-		.filter_map(|f| f.ok());
+		.filter_map(|f| {
+			if let Err(ref e) = f {
+				println!("Error loading a file... {}", e);
+			}
+
+			f.ok()
+		});
 	
 	for entry in walker {
-		dbg!(&entry);
-
 		if !entry.file_type().is_file() { continue; }
 
 		let fname = entry.path().file_stem().ok_or_else(
@@ -30,8 +34,7 @@ pub fn import_from_names(
 
 		let tags = process_into_tags(fname.as_ref(), &method);
 
-		dbg!(&fname, &tags);
-
+		println!("Adding tags {:?} for file {}", &tags, entry.path().to_string_lossy());
 		add_tags_to(st, entry.path(), &tags)?;
 	}
 
