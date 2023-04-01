@@ -35,7 +35,6 @@ mod cli {
 			panic!("An index already exists here! Consider deleting it.");
 		}
 
-		// Fails to compile -- fix by changing PathBuf parameter to &Path
 		sub::write_to_index(path, ProgramState::new());
 	}
 }
@@ -97,7 +96,7 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 			let mut st = load_state();
 			st.index = HashMap::new();
 
-			sub::write_to_index(closest, st);
+			sub::write_to_index(&closest, st);
 
 			// that wasn't so hard, was it?
 		},
@@ -113,7 +112,7 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 				&args[1]
 			)?;
 
-			sub::write_to_index(get_closest_index().unwrap(), st)
+			sub::write_to_index(&get_closest_index().unwrap(), st)
 		},
 
 		"rm"		=> {
@@ -138,7 +137,7 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 				&args[1]
 			)?;
 
-			sub::write_to_index(get_closest_index().unwrap(), st)
+			sub::write_to_index(&get_closest_index().unwrap(), st)
 		},
 
 		"mv"	| "mvt"	|
@@ -165,7 +164,7 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 				(&args[1]).into()
 			);
 
-			sub::write_to_index(get_closest_index().unwrap(), st)
+			sub::write_to_index(&get_closest_index().unwrap(), st)
 		},
 
 		"render"	=> {
