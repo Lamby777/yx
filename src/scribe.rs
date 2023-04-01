@@ -15,24 +15,24 @@ pub fn import_from_names(
 	target: impl AsRef<Path>,
 	method: ScribeMethod
 ) -> IDFC<()> {
-	for entry in WalkDir::new(&target) {
-		match entry {
-			Err(e)	=> {
-				println!("Error walking file in dir {:?}... {}", target.as_ref(), e);
-			}
+	let walker =
+		WalkDir::new(&target).into_iter()
+		.filter_map(|f| f.ok());
+	
+	for entry in walker {
+		dbg!(&entry);
 
-			Ok(i)	=> {
-				if i.path() == target.as_ref() { continue; }
+		if !entry.file_type().is_file() { continue; }
 
-				let fname = i.path().file_stem().ok_or_else(
-					|| "No file name"
-				)?.to_string_lossy();
+		let fname = entry.path().file_stem().ok_or_else(
+			|| "No file name"
+		)?.to_string_lossy();
 
-				let tags = process_into_tags(fname.as_ref(), &method);
+		let tags = process_into_tags(fname.as_ref(), &method);
 
-				add_tags_to(st, target.as_ref(), &tags)?;
-			}
-		}
+		dbg!(&fname, &tags);
+
+		add_tags_to(st, entry.path(), &tags)?;
 	}
 
 	Ok(())
