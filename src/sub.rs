@@ -5,9 +5,9 @@
 * - Dex, 1:32 AM, 12/30/2022
 */
 
-use std::path::{Path, PathBuf};
-use crate::{LINE_SEPARATOR, HashMap, YxIndexIter, get_closest_index,
-			fs, ProgramState, YxFileRecord, indoc, read, IDFC};
+use std::{fs, path::{Path, PathBuf}, cell::Cell};
+use crate::{HashMap, YxIndexIter, get_closest_index,
+			ProgramState, YxFileRecord, IDFC};
 use pathdiff::diff_paths;
 use path_absolutize::*;
 
@@ -36,21 +36,19 @@ pub fn path_relative_to_index(path: impl AsRef<Path>) -> IDFC<PathBuf> {
 }
 
 /// given program state, write it to the index file to save information
-pub fn write_to_index(path: PathBuf, state: ProgramState) {
+pub fn write_to_index(path: &Path, state: &ProgramState) -> IDFC<()> {
 	let ser = serde_json::to_string(&state).unwrap();
 
 	// Make the file
-	if let Err(_) = fs::write(&path, ser) {
-		panic!("Failed to write to {:?}!", path);
-	}
+	fs::write(&path, ser).map_err(|e| {
+		println!("Failed to write to {:?}!", path);
+		e.into()
+	})
 }
 
-pub fn add_tag_to(state: &mut ProgramState, path: PathBuf, tag: &str) -> IDFC<()> {
+pub fn add_tag_to(state: &mut ProgramState, path: &Path, tag: &str) -> IDFC<()> {
 	let tag = tag.to_string();
-
-	println!("Pre");
 	let path_rel = path_relative_to_index(&path)?;
-	dbg!(&path_rel);
 
 	state.index.entry(path_rel).and_modify(|record| {
 		record.tags.insert(tag.to_owned());
@@ -61,29 +59,30 @@ pub fn add_tag_to(state: &mut ProgramState, path: PathBuf, tag: &str) -> IDFC<()
 	Ok(())
 }
 
-pub fn rm_tag_from(state: &mut ProgramState, path: PathBuf, tag: &str) -> IDFC<()> {
+pub fn rm_tag_from(state: &mut ProgramState, path: &Path, tag: &str) -> IDFC<bool> {
 	// WILL NOT CHECK IF THE TAG IS THERE!
 	// Use `file_has_tag` first if you need to know.
 	let tag = tag.to_string();
 	let path_rel = path_relative_to_index(&path)?;
+	let res_cell = Cell::new(false);
 
 	state.index.entry(path_rel).and_modify(|record| {
-		record.tags.retain(|v| v.as_str() != tag)
+		let contains = record.tags.contains(&tag);
+		if contains {
+			record.tags.retain(|v| v.as_str() != tag);
+		}
+		
+		res_cell.set(contains);
 	});
 
-	Ok(())
+	Ok(res_cell.get())
 }
 
 pub fn file_has_tag(state: &ProgramState, path: PathBuf, tag: &str) -> IDFC<bool> {
 	let path_rel = path_relative_to_index(&path)?;
-	let record = state.index.get(&path_rel);
-
-	if record.is_none() {
-		panic!("File not in index!");
-	}
-
-	// shadow with unwrapped value
-	let record = record.unwrap();
+	let record = state.index.get(&path_rel).ok_or_else(
+		|| "File not in index!"
+	)?;
 
 	Ok(record.tags.contains(&tag.to_string()))
 }
@@ -171,35 +170,6 @@ pub mod fedit {
 			println!("One of those 2 paths doesn't exist!");
 		}
 	}
-}
-
-pub fn confirm_purge(closest: &PathBuf) -> bool {
-	println!( indoc! {"
-
-		{}
-		Are you sure? This will clear out every tag from the index!
-		Just to be clear, you'll be clearing this index:
-		{}
-		(found closest to the current working directory)
-		{}
-	
-		[Y/N]"}, LINE_SEPARATOR, closest.display(), LINE_SEPARATOR);
-	
-	let res: char;
-
-	loop {
-		let res_attempt: String = read!();
-		let res_attempt = res_attempt.to_lowercase().chars().nth(0);
-
-		if let Some(res_n) = res_attempt {
-			res = res_n;
-			break
-		} else {
-			println!("Really? Come on! Type something!");
-		}
-	}
-
-	res == 'y'
 }
 
 /// Get all files matching predicate

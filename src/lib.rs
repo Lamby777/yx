@@ -10,7 +10,7 @@ const LINE_SEPARATOR: &str	= "--------------------------------------------------
 use std::{fs, env};
 use std::collections::{HashMap, HashSet, hash_map::IntoIter};
 use itertools::Itertools;
-use std::path::PathBuf;
+use std::path::{PathBuf, Path};
 use serde::{Serialize, Deserialize};
 use indoc::indoc;
 use text_io::read;
@@ -23,6 +23,57 @@ pub use classes::IDFC;
 
 mod constraints;
 mod render;
+
+mod cli {
+    use std::collections::HashMap;
+    use std::path::Path;
+    use crate::classes::{ProgramState, ProgramStatePathed};
+	use crate::{sub, IDFC};
+
+	pub fn c_create(pathable: impl AsRef<Path>) -> IDFC<()> {
+		let path = pathable.as_ref();
+		if path.exists() {
+			panic!("An index already exists here! Consider deleting it.");
+		}
+
+		sub::write_to_index(path, &ProgramState::new())
+	}
+
+	// Be careful!
+	pub fn c_purge(st: &mut ProgramStatePathed) -> IDFC<()> {
+		st.state.index = HashMap::new();
+
+		sub::write_to_index(&st.path, &st.state)
+	}
+
+	pub fn c_add(
+		st: &mut ProgramStatePathed,
+		target: impl AsRef<Path>,
+		tags: &[impl AsRef<str>],
+	) -> IDFC<()> {
+		sub::add_tag_to(
+			&mut st.state,
+			target.as_ref(),
+			tags[0].as_ref()
+		)?;
+
+		sub::write_to_index(&st.path, &st.state)
+	}
+
+	pub fn c_remove(
+		st: &mut ProgramStatePathed,
+		target: impl AsRef<Path>,
+		tags: &[impl AsRef<str>],
+	) -> IDFC<()> {
+		sub::rm_tag_from(
+			&mut st.state,
+			target.as_ref(),
+			tags[0].as_ref()
+		)?;
+		
+		sub::write_to_index(&st.path, &st.state)
+	}
+}
 
 pub fn start(args: Vec<String>) -> IDFC<()> {
 	if args.len() < 2 {
@@ -41,36 +92,41 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 		"create"	=> {
 			assert_argc(args, &[0, 1]);
 
-			let path: PathBuf;
-			
-			if args.len() < 1 {
-				// current working dir
-				path = get_cwd().join(INDEX_FILE_NAME);
-			} else {
-				path = PathBuf::from(&args[0]);
-			}
-
-			if path.exists() {
-				panic!("An index already exists here! Consider deleting it.");
-			}
-
-			sub::write_to_index(path, ProgramState::new());
+			cli::c_create(
+				if args.len() < 1 {
+					// current working dir
+					get_cwd().join(INDEX_FILE_NAME)
+				} else {
+					PathBuf::from(&args[0])
+				}
+			)?;
 		},
 
 		"purge"		=> {
 			// short circuit check if "yes" is the next arg
-			let confirmed = args.len() >= 1 && (args[0] == "yes");
-			let closest = get_closest_index();
-
-			if closest.is_none() {
-				panic!("No index files in this directory or any of its parent directories!");
-			}
-
-			let closest = closest.unwrap();
+			let confirmed = args.len() >= 1 && (args[0].to_lowercase() == "yes");
+			let closest = get_closest_index().ok_or_else(
+				|| "No index files in this directory or any of its parent directories!"
+			)?;
 
 			if !confirmed {
 				if args.len() <= 0 {
-					if !sub::confirm_purge(&closest) { return Ok(()) }
+					// Prompt for confirmation
+					println!( indoc! {"
+
+						{}
+						Are you sure? This will clear out every tag from the index!
+						Just to be clear, you'll be clearing this index:
+						{}
+						(found closest to the current working directory)
+						{}
+
+						[Y/N]"
+					}, LINE_SEPARATOR, closest.display(), LINE_SEPARATOR);
+					
+					if !repeat_prompt_yn() {
+						return Ok(())
+					}
 				} else {
 					show_help();
 					panic!("Invalid use of yx purge!");
@@ -78,57 +134,50 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 			}
 
 			// are they gone yet?
-
 			// ok cool, they're gone.
+
+			cli::c_purge(
+				&mut load_state_and_path()?
+			)?;
 
 			// at long last, we purge the tags, because
 			// no one with any regrets would get this far.
-
-			let mut st = load_state();
-			st.index = HashMap::new();
-
-			sub::write_to_index(closest, st);
-
 			// that wasn't so hard, was it?
 		},
 
 		"add"		=> {
 			assert_argc(args, &[2]);
 
-			let mut st = load_state();
-
-			sub::add_tag_to(
-				&mut st,
-				(&args[0]).into(),
-				&args[1]
+			cli::c_add(
+				&mut load_state_and_path()?,
+				&args[0],
+				&args[1..]
 			)?;
-
-			sub::write_to_index(get_closest_index().unwrap(), st)
 		},
 
 		"rm"		=> {
 			assert_argc(args, &[2]);
 
-			let mut st = load_state();
+			let mut st = load_state_and_path()?;
 
 			// If file doesn't have tag, yell at the user :P
 			let has_tag = sub::file_has_tag(
-				&st,
+				&st.state,
 				(&args[0]).into(),
 				&args[1]
 			)?;
 
-			if !(has_tag) {
-				panic!("File already has this tag!");
+			if !has_tag {
+				return Err(
+					"File doesn't have this tag!".into()
+				);
 			}
 
-			sub::rm_tag_from(
+			cli::c_remove(
 				&mut st,
-				(&args[0]).into(),
-				&args[1]
+				&args[0],
+				&args[1..]
 			)?;
-
-			sub::write_to_index(get_closest_index().unwrap(), st)
 		},
 
 		"mv"	| "mvt"	|
@@ -136,32 +185,31 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 		"apt"	| "mapt" => {
 			assert_argc(args, &[2]);
 
-			let mut st = load_state();
+			let mut st = load_state_only()?;
 
-			let f = match cmd {
+			let cmd_action_fn = match cmd {
 				"mv"		=> sub::fedit::move_file_and_tags,
 				"mvt"		=> sub::fedit::move_tags,
 				"cp"		=> sub::fedit::copy_file_and_tags,
 				"cpt"		=> sub::fedit::copy_tags,
 				"apt"		=> sub::fedit::append_tags,
 				"mapt"		=> sub::fedit::append_tags_rm_old,
-
-				_ => panic!("bruh"),
+				_			=> unreachable!(),
 			};
 
-			f(
+			cmd_action_fn(
 				&mut st,
 				(&args[0]).into(),
 				(&args[1]).into()
 			);
 
-			sub::write_to_index(get_closest_index().unwrap(), st)
+			sub::write_to_index(&get_closest_index().unwrap(), &st)?
 		},
 
 		"render"	=> {
 			assert_argc(args, &[0, 1, 2]);
 
-			let st = load_state();
+			let st = load_state_only()?;
 
 			// Get modes from args
 			let (m_copy, m_rename, m_iall) = match args.len() {
@@ -200,7 +248,7 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 			assert_argc(args, &[0, 1, 2]);
 			let argc = args.len();
 
-			let st = load_state();
+			let st = load_state_only()?;
 
 			let it = st.index.into_iter();
 
@@ -271,24 +319,35 @@ pub fn show_help() {
 	println!("{}\n{}{}\n", LINE_SEPARATOR, include_str!("help.txt"), LINE_SEPARATOR);
 }
 
-pub fn load_state() -> ProgramState {
-	let index = get_closest_index();
-	
-	if index.is_none() {
-		panic!("{} not found in current path!", INDEX_FILE_NAME);
-	}
+pub fn load_state_and_path() -> IDFC<ProgramStatePathed> {
+	let index = get_closest_index().ok_or_else(
+		|| format!("{} not found in current path!", INDEX_FILE_NAME)
+	)?;
 
-	let index = index.unwrap();
+	ProgramStatePathed::from_path(index)
+}
 
-	let res = fs::read_to_string(index);
+pub fn load_state_only() -> IDFC<ProgramState> {
+	// maybe make this call parse_index_at later?
+	// would be more efficient, but too busy rn to think of
+	// a way to do it without code duplication for the
+	// get_closest_index() part and also not have a pointless helper function
+	let ProgramStatePathed {
+		state: res,
+		..
+	} = load_state_and_path()?;
 
-	match res {
-		Ok(content) => serde_json::from_str(&content).unwrap(),
+	Ok(res)
+}
 
-		Err(_) => {
-			panic!("Error deserializing .yx_index!");
-		},
-	}
+pub fn parse_index_at(index_path: impl AsRef<Path>) -> IDFC<ProgramState> {
+	let res = fs::read_to_string(index_path.as_ref())?;
+	serde_json::from_str::<ProgramState>(&res).map_err(
+		|e| {
+			println!("Failed to parse index... Did you recently do an update?");
+			e.into()
+		}
+	)
 }
 
 pub fn get_closest_index() -> Option<PathBuf> {
@@ -376,4 +435,22 @@ fn cmd_replace_aliases<'a>(cmd: &'a String) -> &'a str {
 
 		_		=> &cmd
 	}
+}
+
+pub fn repeat_prompt_yn() -> bool {
+	let res: char;
+
+	loop {
+		let res_attempt: String = read!();
+		let res_attempt = res_attempt.to_lowercase().chars().nth(0);
+
+		if let Some(res_n) = res_attempt {
+			res = res_n;
+			break
+		} else {
+			println!("Really? Come on! Type something!");
+		}
+	}
+
+	res == 'y'
 }
