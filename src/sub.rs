@@ -5,7 +5,7 @@
 * - Dex, 1:32 AM, 12/30/2022
 */
 
-use std::{fs, path::{Path, PathBuf}};
+use std::{fs, path::{Path, PathBuf}, cell::Cell};
 use crate::{HashMap, YxIndexIter, get_closest_index,
 			ProgramState, YxFileRecord, IDFC};
 use pathdiff::diff_paths;
@@ -59,29 +59,30 @@ pub fn add_tag_to(state: &mut ProgramState, path: &Path, tag: &str) -> IDFC<()> 
 	Ok(())
 }
 
-pub fn rm_tag_from(state: &mut ProgramState, path: PathBuf, tag: &str) -> IDFC<()> {
+pub fn rm_tag_from(state: &mut ProgramState, path: PathBuf, tag: &str) -> IDFC<bool> {
 	// WILL NOT CHECK IF THE TAG IS THERE!
 	// Use `file_has_tag` first if you need to know.
 	let tag = tag.to_string();
 	let path_rel = path_relative_to_index(&path)?;
+	let res_cell = Cell::new(false);
 
 	state.index.entry(path_rel).and_modify(|record| {
-		record.tags.retain(|v| v.as_str() != tag)
+		let contains = record.tags.contains(&tag);
+		if contains {
+			record.tags.retain(|v| v.as_str() != tag);
+		}
+		
+		res_cell.set(contains);
 	});
 
-	Ok(())
+	Ok(res_cell.get())
 }
 
 pub fn file_has_tag(state: &ProgramState, path: PathBuf, tag: &str) -> IDFC<bool> {
 	let path_rel = path_relative_to_index(&path)?;
-	let record = state.index.get(&path_rel);
-
-	if record.is_none() {
-		panic!("File not in index!");
-	}
-
-	// shadow with unwrapped value
-	let record = record.unwrap();
+	let record = state.index.get(&path_rel).ok_or_else(
+		|| "File not in index!"
+	)?;
 
 	Ok(record.tags.contains(&tag.to_string()))
 }
