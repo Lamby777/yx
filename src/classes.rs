@@ -2,7 +2,24 @@
 * Structs are stored here to save space in main
 */
 
-use crate::{HashMap, HashSet, PathBuf, Serialize, Deserialize, IntoIter};
+use crate::{HashMap, HashSet, PathBuf, Serialize, Deserialize, IntoIter, load_state};
+
+#[derive(Debug)]
+pub struct ProgramStatePathed {
+	pub	path:	PathBuf,
+	pub	state:	ProgramState,
+}
+
+impl ProgramStatePathed {
+	fn new(path: PathBuf) -> Self {
+		let state = todo!();
+		
+		Self {
+			path:	path,
+			state:	state,
+		}
+	}
+}
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ProgramState {

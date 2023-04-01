@@ -10,7 +10,7 @@ const LINE_SEPARATOR: &str	= "--------------------------------------------------
 use std::{fs, env};
 use std::collections::{HashMap, HashSet, hash_map::IntoIter};
 use itertools::Itertools;
-use std::path::PathBuf;
+use std::path::{PathBuf, Path};
 use serde::{Serialize, Deserialize};
 use indoc::indoc;
 use text_io::read;
@@ -311,15 +311,15 @@ pub fn show_help() {
 }
 
 pub fn load_state() -> IDFC<ProgramState> {
-	let index = get_closest_index();
-	
-	if index.is_none() {
-		panic!("{} not found in current path!", INDEX_FILE_NAME);
-	}
+	let index = get_closest_index().ok_or_else(
+		|| format!("{} not found in current path!", INDEX_FILE_NAME)
+	)?;
 
-	let index = index.unwrap();
+	parse_index_at(index)
+}
 
-	let res = fs::read_to_string(index)?;
+pub fn parse_index_at(index_path: impl AsRef<Path>) -> IDFC<ProgramState> {
+	let res = fs::read_to_string(index_path.as_ref())?;
 	serde_json::from_str::<ProgramState>(&res).map_err(
 		|e| {
 			println!("Failed to parse index... Did you recently do an update?");
