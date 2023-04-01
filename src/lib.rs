@@ -49,12 +49,12 @@ mod cli {
 	pub fn c_add(
 		st: &mut ProgramStatePathed,
 		target: impl AsRef<Path>,
-		tags: &[impl AsRef<str>],
+		tags: &[&str],
 	) -> IDFC<()> {
-		sub::add_tag_to(
+		sub::add_tags_to(
 			&mut st.state,
 			target.as_ref(),
-			tags[0].as_ref()
+			tags,
 		)?;
 
 		sub::write_to_index(&st.path, &st.state)
@@ -63,12 +63,12 @@ mod cli {
 	pub fn c_remove(
 		st: &mut ProgramStatePathed,
 		target: impl AsRef<Path>,
-		tags: &[impl AsRef<str>],
+		tags: &[&str],
 	) -> IDFC<()> {
-		sub::rm_tag_from(
+		sub::rm_tags_from(
 			&mut st.state,
 			target.as_ref(),
-			tags[0].as_ref()
+			tags
 		)?;
 		
 		sub::write_to_index(&st.path, &st.state)
@@ -148,10 +148,12 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 		"add"		=> {
 			assert_argc(args, &[2]);
 
+			let tags: &[&str] = &args[1..].iter().map(|s| s.as_str()).collect::<Vec<&str>>();
+
 			cli::c_add(
 				&mut load_state_and_path()?,
 				&args[0],
-				&args[1..]
+				&tags,
 			)?;
 		},
 
@@ -172,11 +174,13 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 					"File doesn't have this tag!".into()
 				);
 			}
+			
+			let tags: &[&str] = &args[1..].iter().map(|s| s.as_str()).collect::<Vec<&str>>();
 
 			cli::c_remove(
 				&mut st,
 				&args[0],
-				&args[1..]
+				&tags,
 			)?;
 		},
 

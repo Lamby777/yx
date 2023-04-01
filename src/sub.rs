@@ -5,7 +5,7 @@
 * - Dex, 1:32 AM, 12/30/2022
 */
 
-use std::{fs, path::{Path, PathBuf}, cell::Cell};
+use std::{fs, path::{Path, PathBuf}};
 use crate::{HashMap, YxIndexIter, get_closest_index,
 			ProgramState, YxFileRecord, IDFC};
 use pathdiff::diff_paths;
@@ -46,36 +46,34 @@ pub fn write_to_index(path: &Path, state: &ProgramState) -> IDFC<()> {
 	})
 }
 
-pub fn add_tag_to(state: &mut ProgramState, path: &Path, tag: &str) -> IDFC<()> {
-	let tag = tag.to_string();
+pub fn add_tags_to(state: &mut ProgramState, path: &Path, tags: &[&str]) -> IDFC<()> {
 	let path_rel = path_relative_to_index(&path)?;
 
+	
+	let mapped = tags.iter()
+		.map(|s| s.to_string());
+
 	state.index.entry(path_rel).and_modify(|record| {
-		record.tags.insert(tag.to_owned());
-	}).or_insert(
-		YxFileRecord::new(tag.to_owned())
-	);
+		record.tags.extend(mapped.clone());
+	}).or_insert({
+		YxFileRecord::new(
+			&mapped.collect::<Vec<String>>()
+		)
+	});
 
 	Ok(())
 }
 
-pub fn rm_tag_from(state: &mut ProgramState, path: &Path, tag: &str) -> IDFC<bool> {
+pub fn rm_tags_from(state: &mut ProgramState, path: &Path, tags: &[&str]) -> IDFC<()> {
 	// WILL NOT CHECK IF THE TAG IS THERE!
 	// Use `file_has_tag` first if you need to know.
-	let tag = tag.to_string();
 	let path_rel = path_relative_to_index(&path)?;
-	let res_cell = Cell::new(false);
 
 	state.index.entry(path_rel).and_modify(|record| {
-		let contains = record.tags.contains(&tag);
-		if contains {
-			record.tags.retain(|v| v.as_str() != tag);
-		}
-		
-		res_cell.set(contains);
+		record.tags.retain(|v| tags.contains(&v.as_str()));
 	});
 
-	Ok(res_cell.get())
+	Ok(())
 }
 
 pub fn file_has_tag(state: &ProgramState, path: PathBuf, tag: &str) -> IDFC<bool> {

@@ -42,9 +42,9 @@ pub struct YxFileRecord {
 }
 
 impl YxFileRecord {
-	pub fn new(tag: YxTag) -> Self {
+	pub fn new(tags: &[YxTag]) -> Self {
 		YxFileRecord {
-			tags: HashSet::from([tag]),
+			tags: tags.iter().cloned().collect(),
 		}
 	}
 }
