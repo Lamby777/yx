@@ -178,18 +178,17 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 
 			let mut st = load_state()?;
 
-			let f = match cmd {
+			let cmd_action_fn = match cmd {
 				"mv"		=> sub::fedit::move_file_and_tags,
 				"mvt"		=> sub::fedit::move_tags,
 				"cp"		=> sub::fedit::copy_file_and_tags,
 				"cpt"		=> sub::fedit::copy_tags,
 				"apt"		=> sub::fedit::append_tags,
 				"mapt"		=> sub::fedit::append_tags_rm_old,
-
-				_ => panic!("bruh"),
+				_			=> unreachable!(),
 			};
 
-			f(
+			cmd_action_fn(
 				&mut st,
 				(&args[0]).into(),
 				(&args[1]).into()
