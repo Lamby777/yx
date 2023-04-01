@@ -108,7 +108,7 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 			// are they gone yet?
 			// ok cool, they're gone.
 
-			let mut st = load_state();
+			let mut st = load_state()?;
 			cli::c_purge(&closest, &mut st);
 
 			// at long last, we purge the tags, because
@@ -119,7 +119,7 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 		"add"		=> {
 			assert_argc(args, &[2]);
 
-			let mut st = load_state();
+			let mut st = load_state()?;
 
 			sub::add_tag_to(
 				&mut st,
@@ -133,7 +133,7 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 		"rm"		=> {
 			assert_argc(args, &[2]);
 
-			let mut st = load_state();
+			let mut st = load_state()?;
 
 			// If file doesn't have tag, yell at the user :P
 			let has_tag = sub::file_has_tag(
@@ -160,7 +160,7 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 		"apt"	| "mapt" => {
 			assert_argc(args, &[2]);
 
-			let mut st = load_state();
+			let mut st = load_state()?;
 
 			let f = match cmd {
 				"mv"		=> sub::fedit::move_file_and_tags,
@@ -185,7 +185,7 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 		"render"	=> {
 			assert_argc(args, &[0, 1, 2]);
 
-			let st = load_state();
+			let st = load_state()?;
 
 			// Get modes from args
 			let (m_copy, m_rename, m_iall) = match args.len() {
@@ -224,7 +224,7 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 			assert_argc(args, &[0, 1, 2]);
 			let argc = args.len();
 
-			let st = load_state();
+			let st = load_state()?;
 
 			let it = st.index.into_iter();
 
@@ -295,7 +295,7 @@ pub fn show_help() {
 	println!("{}\n{}{}\n", LINE_SEPARATOR, include_str!("help.txt"), LINE_SEPARATOR);
 }
 
-pub fn load_state() -> ProgramState {
+pub fn load_state() -> IDFC<ProgramState> {
 	let index = get_closest_index();
 	
 	if index.is_none() {
@@ -304,15 +304,11 @@ pub fn load_state() -> ProgramState {
 
 	let index = index.unwrap();
 
-	let res = fs::read_to_string(index);
+	let res = fs::read_to_string(index)?;
 
-	match res {
-		Ok(content) => serde_json::from_str(&content).unwrap(),
-
-		Err(_) => {
-			panic!("Error deserializing .yx_index!");
-		},
-	}
+	Ok(
+		serde_json::from_str(&res)?
+	)
 }
 
 pub fn get_closest_index() -> Option<PathBuf> {
