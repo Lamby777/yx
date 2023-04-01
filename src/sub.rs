@@ -70,7 +70,7 @@ pub fn rm_tags_from(state: &mut ProgramState, path: &Path, tags: &[&str]) -> IDF
 	let path_rel = path_relative_to_index(&path)?;
 
 	state.index.entry(path_rel).and_modify(|record| {
-		record.tags.retain(|v| tags.contains(&v.as_str()));
+		record.tags.retain(|v| !(tags.contains(&v.as_str())));
 	});
 
 	Ok(())
