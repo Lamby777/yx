@@ -7,7 +7,7 @@
 
 use std::path::{Path, PathBuf};
 use crate::{LINE_SEPARATOR, HashMap, YxIndexIter, get_closest_index,
-			fs, ProgramState, YxFileRecord, indoc, read, IDFC};
+			fs, ProgramState, YxFileRecord, indoc, read, IDFC, repeat_prompt_yn};
 use pathdiff::diff_paths;
 use path_absolutize::*;
 
@@ -183,23 +183,10 @@ pub fn confirm_purge(closest: &PathBuf) -> bool {
 		(found closest to the current working directory)
 		{}
 	
-		[Y/N]"}, LINE_SEPARATOR, closest.display(), LINE_SEPARATOR);
-	
-	let res: char;
+		[Y/N]"
+	}, LINE_SEPARATOR, closest.display(), LINE_SEPARATOR);
 
-	loop {
-		let res_attempt: String = read!();
-		let res_attempt = res_attempt.to_lowercase().chars().nth(0);
-
-		if let Some(res_n) = res_attempt {
-			res = res_n;
-			break
-		} else {
-			println!("Really? Come on! Type something!");
-		}
-	}
-
-	res == 'y'
+	repeat_prompt_yn()
 }
 
 /// Get all files matching predicate

@@ -95,8 +95,8 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 			}
 
 			// are they gone yet?
-
 			// ok cool, they're gone.
+
 			let mut st = load_state();
 			cli::c_purge(&closest, &mut st);
 
@@ -389,4 +389,22 @@ fn cmd_replace_aliases<'a>(cmd: &'a String) -> &'a str {
 
 		_		=> &cmd
 	}
+}
+
+pub fn repeat_prompt_yn() -> bool {
+	let res: char;
+
+	loop {
+		let res_attempt: String = read!();
+		let res_attempt = res_attempt.to_lowercase().chars().nth(0);
+
+		if let Some(res_n) = res_attempt {
+			res = res_n;
+			break
+		} else {
+			println!("Really? Come on! Type something!");
+		}
+	}
+
+	res == 'y'
 }
