@@ -5,9 +5,9 @@
 * - Dex, 1:32 AM, 12/30/2022
 */
 
-use std::path::{Path, PathBuf};
-use crate::{LINE_SEPARATOR, HashMap, YxIndexIter, get_closest_index,
-			fs, ProgramState, YxFileRecord, indoc, read, IDFC, repeat_prompt_yn};
+use std::{fs, path::{Path, PathBuf}};
+use crate::{HashMap, YxIndexIter, get_closest_index,
+			ProgramState, YxFileRecord, IDFC};
 use pathdiff::diff_paths;
 use path_absolutize::*;
 
@@ -171,22 +171,6 @@ pub mod fedit {
 			println!("One of those 2 paths doesn't exist!");
 		}
 	}
-}
-
-pub fn confirm_purge(closest: &PathBuf) -> bool {
-	println!( indoc! {"
-
-		{}
-		Are you sure? This will clear out every tag from the index!
-		Just to be clear, you'll be clearing this index:
-		{}
-		(found closest to the current working directory)
-		{}
-	
-		[Y/N]"
-	}, LINE_SEPARATOR, closest.display(), LINE_SEPARATOR);
-
-	repeat_prompt_yn()
 }
 
 /// Get all files matching predicate

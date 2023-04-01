@@ -76,18 +76,29 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 
 		"purge"		=> {
 			// short circuit check if "yes" is the next arg
-			let confirmed = args.len() >= 1 && (args[0] == "yes");
-			let closest = get_closest_index();
-
-			if closest.is_none() {
-				panic!("No index files in this directory or any of its parent directories!");
-			}
-
-			let closest = closest.unwrap();
+			let confirmed = args.len() >= 1 && (args[0].to_lowercase() == "yes");
+			let closest = get_closest_index().ok_or_else(
+				|| "No index files in this directory or any of its parent directories!"
+			)?;
 
 			if !confirmed {
 				if args.len() <= 0 {
-					if !sub::confirm_purge(&closest) { return Ok(()) }
+					// Prompt for confirmation
+					println!( indoc! {"
+
+						{}
+						Are you sure? This will clear out every tag from the index!
+						Just to be clear, you'll be clearing this index:
+						{}
+						(found closest to the current working directory)
+						{}
+
+						[Y/N]"
+					}, LINE_SEPARATOR, closest.display(), LINE_SEPARATOR);
+					
+					if !repeat_prompt_yn() {
+						return Ok(())
+					}
 				} else {
 					show_help();
 					panic!("Invalid use of yx purge!");
