@@ -125,7 +125,7 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 			// are they gone yet?
 			// ok cool, they're gone.
 
-			let mut st = load_state()?;
+			let mut st = load_state_and_path()?;
 			cli::c_purge(&mut st)?;
 
 			// at long last, we purge the tags, because
@@ -136,7 +136,7 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 		"add"		=> {
 			assert_argc(args, &[2]);
 
-			let mut st = load_state_drop_path()?;
+			let mut st = load_state_only()?;
 
 			cli::c_add(
 				&mut st,
@@ -149,7 +149,7 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 		"rm"		=> {
 			assert_argc(args, &[2]);
 
-			let mut st = load_state_drop_path()?;
+			let mut st = load_state_only()?;
 
 			// If file doesn't have tag, yell at the user :P
 			let has_tag = sub::file_has_tag(
@@ -176,7 +176,7 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 		"apt"	| "mapt" => {
 			assert_argc(args, &[2]);
 
-			let mut st = load_state_drop_path()?;
+			let mut st = load_state_only()?;
 
 			let cmd_action_fn = match cmd {
 				"mv"		=> sub::fedit::move_file_and_tags,
@@ -200,7 +200,7 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 		"render"	=> {
 			assert_argc(args, &[0, 1, 2]);
 
-			let st = load_state_drop_path()?;
+			let st = load_state_only()?;
 
 			// Get modes from args
 			let (m_copy, m_rename, m_iall) = match args.len() {
@@ -239,7 +239,7 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 			assert_argc(args, &[0, 1, 2]);
 			let argc = args.len();
 
-			let st = load_state_drop_path()?;
+			let st = load_state_only()?;
 
 			let it = st.index.into_iter();
 
@@ -310,7 +310,7 @@ pub fn show_help() {
 	println!("{}\n{}{}\n", LINE_SEPARATOR, include_str!("help.txt"), LINE_SEPARATOR);
 }
 
-pub fn load_state() -> IDFC<ProgramStatePathed> {
+pub fn load_state_and_path() -> IDFC<ProgramStatePathed> {
 	let index = get_closest_index().ok_or_else(
 		|| format!("{} not found in current path!", INDEX_FILE_NAME)
 	)?;
@@ -318,11 +318,15 @@ pub fn load_state() -> IDFC<ProgramStatePathed> {
 	ProgramStatePathed::from_path(index)
 }
 
-pub fn load_state_drop_path() -> IDFC<ProgramState> {
+pub fn load_state_only() -> IDFC<ProgramState> {
+	// maybe make this call parse_index_at later?
+	// would be more efficient, but too busy rn to think of
+	// a way to do it without code duplication for the
+	// get_closest_index() part and also not have a pointless helper function
 	let ProgramStatePathed {
 		state: res,
 		..
-	} = load_state()?;
+	} = load_state_and_path()?;
 
 	Ok(res)
 }
