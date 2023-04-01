@@ -30,20 +30,20 @@ mod cli {
     use crate::classes::ProgramState;
 	use crate::{sub, IDFC};
 
-	pub fn c_create(asref: impl AsRef<Path>) {
+	pub fn c_create(asref: impl AsRef<Path>) -> IDFC<()> {
 		let path = asref.as_ref();
 		if path.exists() {
 			panic!("An index already exists here! Consider deleting it.");
 		}
 
-		sub::write_to_index(path, &ProgramState::new());
+		sub::write_to_index(path, &ProgramState::new())
 	}
 
 	// Be careful!
-	pub fn c_purge(st: &mut ProgramState, path: &Path) {
+	pub fn c_purge(st: &mut ProgramState, path: &Path) -> IDFC<()> {
 		st.index = HashMap::new();
 
-		sub::write_to_index(&path, st);
+		sub::write_to_index(&path, st)
 	}
 
 	// TODO: WRAPPER CLASS TO KEEP TRACK OF PATH FOR PROGRAMSTATE
@@ -60,8 +60,7 @@ mod cli {
 			tags[0].as_ref()
 		)?;
 
-		sub::write_to_index(st_path, &st);
-		Ok(())
+		sub::write_to_index(st_path, &st)
 	}
 }
 
@@ -89,7 +88,7 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 				} else {
 					PathBuf::from(&args[0])
 				}
-			);
+			)?;
 		},
 
 		"purge"		=> {
@@ -127,7 +126,7 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 			// ok cool, they're gone.
 
 			let mut st = load_state()?;
-			cli::c_purge(&mut st, &closest);
+			cli::c_purge(&mut st, &closest)?;
 
 			// at long last, we purge the tags, because
 			// no one with any regrets would get this far.
@@ -169,7 +168,7 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 				&args[1]
 			)?;
 
-			sub::write_to_index(&get_closest_index().unwrap(), &st)
+			sub::write_to_index(&get_closest_index().unwrap(), &st)?
 		},
 
 		"mv"	| "mvt"	|
@@ -196,7 +195,7 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 				(&args[1]).into()
 			);
 
-			sub::write_to_index(&get_closest_index().unwrap(), &st)
+			sub::write_to_index(&get_closest_index().unwrap(), &st)?
 		},
 
 		"render"	=> {

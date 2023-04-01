@@ -36,14 +36,14 @@ pub fn path_relative_to_index(path: impl AsRef<Path>) -> IDFC<PathBuf> {
 }
 
 /// given program state, write it to the index file to save information
-pub fn write_to_index(path: &Path, state: &ProgramState) {
+pub fn write_to_index(path: &Path, state: &ProgramState) -> IDFC<()> {
 	let ser = serde_json::to_string(&state).unwrap();
 
 	// Make the file
 	fs::write(&path, ser).map_err(|e| {
-		panic!("Failed to write to {:?}!", path);
-		e
-	}); //////////////// CHANGE RETURN TYPE LATER
+		println!("Failed to write to {:?}!", path);
+		e.into()
+	})
 }
 
 pub fn add_tag_to(state: &mut ProgramState, path: &Path, tag: &str) -> IDFC<()> {
