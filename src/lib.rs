@@ -30,8 +30,8 @@ mod cli {
     use crate::classes::{ProgramState, ProgramStatePathed};
 	use crate::{sub, IDFC};
 
-	pub fn c_create(asref: impl AsRef<Path>) -> IDFC<()> {
-		let path = asref.as_ref();
+	pub fn c_create(pathable: impl AsRef<Path>) -> IDFC<()> {
+		let path = pathable.as_ref();
 		if path.exists() {
 			panic!("An index already exists here! Consider deleting it.");
 		}
@@ -49,18 +49,17 @@ mod cli {
 	// TODO: WRAPPER CLASS TO KEEP TRACK OF PATH FOR PROGRAMSTATE
 
 	pub fn c_add(
-		st: &mut ProgramState,
-		st_path: &Path,
+		st: &mut ProgramStatePathed,
 		target: impl AsRef<Path>,
 		tags: &[impl AsRef<str>],
 	) -> IDFC<()> {
 		sub::add_tag_to(
-			st,
+			&mut st.state,
 			target.as_ref(),
 			tags[0].as_ref()
 		)?;
 
-		sub::write_to_index(st_path, &st)
+		sub::write_to_index(&st.path, &st.state)
 	}
 }
 
@@ -125,8 +124,9 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 			// are they gone yet?
 			// ok cool, they're gone.
 
-			let mut st = load_state_and_path()?;
-			cli::c_purge(&mut st)?;
+			cli::c_purge(
+				&mut load_state_and_path()?
+			)?;
 
 			// at long last, we purge the tags, because
 			// no one with any regrets would get this far.
@@ -136,11 +136,8 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 		"add"		=> {
 			assert_argc(args, &[2]);
 
-			let mut st = load_state_only()?;
-
 			cli::c_add(
-				&mut st,
-				&get_closest_index().unwrap(),
+				&mut load_state_and_path()?,
 				&args[0],
 				&args[1..]
 			)?;
