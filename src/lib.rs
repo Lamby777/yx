@@ -28,7 +28,7 @@ mod cli {
     use std::collections::HashMap;
     use std::path::Path;
     use crate::classes::ProgramState;
-	use crate::sub;
+	use crate::{sub, IDFC};
 
 	pub fn c_create(asref: impl AsRef<Path>) {
 		let path = asref.as_ref();
@@ -40,10 +40,28 @@ mod cli {
 	}
 
 	// Be careful!
-	pub fn c_purge(path: &Path, state: &mut ProgramState) {
-		state.index = HashMap::new();
+	pub fn c_purge(st: &mut ProgramState, path: &Path) {
+		st.index = HashMap::new();
 
-		sub::write_to_index(&path, state);
+		sub::write_to_index(&path, st);
+	}
+
+	// TODO: WRAPPER CLASS TO KEEP TRACK OF PATH FOR PROGRAMSTATE
+
+	pub fn c_add(
+		st: &mut ProgramState,
+		st_path: &Path,
+		target: impl AsRef<Path>,
+		tags: &[impl AsRef<str>],
+	) -> IDFC<()> {
+		sub::add_tag_to(
+			st,
+			target.as_ref(),
+			tags[0].as_ref()
+		)?;
+
+		sub::write_to_index(st_path, &st);
+		Ok(())
 	}
 }
 
@@ -109,7 +127,7 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 			// ok cool, they're gone.
 
 			let mut st = load_state()?;
-			cli::c_purge(&closest, &mut st);
+			cli::c_purge(&mut st, &closest);
 
 			// at long last, we purge the tags, because
 			// no one with any regrets would get this far.
@@ -121,13 +139,12 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 
 			let mut st = load_state()?;
 
-			sub::add_tag_to(
+			cli::c_add(
 				&mut st,
-				(&args[0]).into(),
-				&args[1]
+				&get_closest_index().unwrap(),
+				&args[0],
+				&args[1..]
 			)?;
-
-			sub::write_to_index(&get_closest_index().unwrap(), &st)
 		},
 
 		"rm"		=> {

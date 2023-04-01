@@ -40,12 +40,13 @@ pub fn write_to_index(path: &Path, state: &ProgramState) {
 	let ser = serde_json::to_string(&state).unwrap();
 
 	// Make the file
-	if let Err(_) = fs::write(&path, ser) {
+	fs::write(&path, ser).map_err(|e| {
 		panic!("Failed to write to {:?}!", path);
-	}
+		e
+	}); //////////////// CHANGE RETURN TYPE LATER
 }
 
-pub fn add_tag_to(state: &mut ProgramState, path: PathBuf, tag: &str) -> IDFC<()> {
+pub fn add_tag_to(state: &mut ProgramState, path: &Path, tag: &str) -> IDFC<()> {
 	let tag = tag.to_string();
 	let path_rel = path_relative_to_index(&path)?;
 
