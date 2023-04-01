@@ -2,7 +2,7 @@
 * Structs are stored here to save space in main
 */
 
-use crate::{HashMap, HashSet, PathBuf, Serialize, Deserialize, IntoIter, load_state};
+use crate::{HashMap, HashSet, PathBuf, Serialize, Deserialize, IntoIter, parse_index_at};
 
 #[derive(Debug)]
 pub struct ProgramStatePathed {
@@ -11,13 +11,13 @@ pub struct ProgramStatePathed {
 }
 
 impl ProgramStatePathed {
-	fn new(path: PathBuf) -> Self {
-		let state = todo!();
-		
-		Self {
+	pub fn from_path(path: PathBuf) -> IDFC<Self> {
+		let state = parse_index_at(&path)?;
+
+		Ok(Self {
 			path:	path,
 			state:	state,
-		}
+		})
 	}
 }
 

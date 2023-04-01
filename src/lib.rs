@@ -27,7 +27,7 @@ mod render;
 mod cli {
     use std::collections::HashMap;
     use std::path::Path;
-    use crate::classes::ProgramState;
+    use crate::classes::{ProgramState, ProgramStatePathed};
 	use crate::{sub, IDFC};
 
 	pub fn c_create(asref: impl AsRef<Path>) -> IDFC<()> {
@@ -40,10 +40,10 @@ mod cli {
 	}
 
 	// Be careful!
-	pub fn c_purge(st: &mut ProgramState, path: &Path) -> IDFC<()> {
-		st.index = HashMap::new();
+	pub fn c_purge(st: &mut ProgramStatePathed) -> IDFC<()> {
+		st.state.index = HashMap::new();
 
-		sub::write_to_index(&path, st)
+		sub::write_to_index(&st.path, &st.state)
 	}
 
 	// TODO: WRAPPER CLASS TO KEEP TRACK OF PATH FOR PROGRAMSTATE
@@ -126,7 +126,7 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 			// ok cool, they're gone.
 
 			let mut st = load_state()?;
-			cli::c_purge(&mut st, &closest)?;
+			cli::c_purge(&mut st)?;
 
 			// at long last, we purge the tags, because
 			// no one with any regrets would get this far.
@@ -136,7 +136,7 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 		"add"		=> {
 			assert_argc(args, &[2]);
 
-			let mut st = load_state()?;
+			let mut st = load_state_drop_path()?;
 
 			cli::c_add(
 				&mut st,
@@ -149,7 +149,7 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 		"rm"		=> {
 			assert_argc(args, &[2]);
 
-			let mut st = load_state()?;
+			let mut st = load_state_drop_path()?;
 
 			// If file doesn't have tag, yell at the user :P
 			let has_tag = sub::file_has_tag(
@@ -176,7 +176,7 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 		"apt"	| "mapt" => {
 			assert_argc(args, &[2]);
 
-			let mut st = load_state()?;
+			let mut st = load_state_drop_path()?;
 
 			let cmd_action_fn = match cmd {
 				"mv"		=> sub::fedit::move_file_and_tags,
@@ -200,7 +200,7 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 		"render"	=> {
 			assert_argc(args, &[0, 1, 2]);
 
-			let st = load_state()?;
+			let st = load_state_drop_path()?;
 
 			// Get modes from args
 			let (m_copy, m_rename, m_iall) = match args.len() {
@@ -239,7 +239,7 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 			assert_argc(args, &[0, 1, 2]);
 			let argc = args.len();
 
-			let st = load_state()?;
+			let st = load_state_drop_path()?;
 
 			let it = st.index.into_iter();
 
@@ -310,12 +310,21 @@ pub fn show_help() {
 	println!("{}\n{}{}\n", LINE_SEPARATOR, include_str!("help.txt"), LINE_SEPARATOR);
 }
 
-pub fn load_state() -> IDFC<ProgramState> {
+pub fn load_state() -> IDFC<ProgramStatePathed> {
 	let index = get_closest_index().ok_or_else(
 		|| format!("{} not found in current path!", INDEX_FILE_NAME)
 	)?;
 
-	parse_index_at(index)
+	ProgramStatePathed::from_path(index)
+}
+
+pub fn load_state_drop_path() -> IDFC<ProgramState> {
+	let ProgramStatePathed {
+		state: res,
+		..
+	} = load_state()?;
+
+	Ok(res)
 }
 
 pub fn parse_index_at(index_path: impl AsRef<Path>) -> IDFC<ProgramState> {
