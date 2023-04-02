@@ -447,10 +447,7 @@ pub fn show_help() {
 }
 
 pub fn load_state_and_path() -> IDFC<ProgramStatePathed> {
-	let index = get_closest_index()?;
-	Ok(
-		load_state_and_path_from(&index)?
-	)
+	Ok(load_state_and_path_from(&get_closest_index()?)?)
 }
 
 pub fn load_state_only() -> IDFC<ProgramState> {
@@ -458,9 +455,7 @@ pub fn load_state_only() -> IDFC<ProgramState> {
 }
 
 pub fn load_state_and_path_from(index: &Path) -> IDFC<ProgramStatePathed> {
-	Ok(
-		ProgramStatePathed::from_path(index.to_path_buf())?
-	)
+	Ok(ProgramStatePathed::from_path(index.to_path_buf())?)
 }
 
 pub fn parse_index_at(index_path: impl AsRef<Path>) -> IDFC<ProgramState> {
