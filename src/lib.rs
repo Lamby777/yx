@@ -17,6 +17,7 @@ use serde::{Serialize, Deserialize};
 use indoc::indoc;
 use text_io::read;
 
+use path_slash::{PathExt as _, PathBufExt as _, CowExt as _};
 
 mod classes;
 use classes::*;
@@ -433,13 +434,17 @@ pub fn load_state_only() -> IDFC<ProgramState> {
 }
 
 pub fn parse_index_at(index_path: impl AsRef<Path>) -> IDFC<ProgramState> {
-	let res = fs::read_to_string(index_path.as_ref())?;
-	serde_json::from_str::<ProgramState>(&res).map_err(
+	let read_data = fs::read_to_string(index_path.as_ref())?;
+	let res = serde_json::from_str::<ProgramState>(&read_data).map_err(
 		|e| {
 			println!("Failed to parse index... Did you recently do an update?");
-			e.into()
+			e
 		}
-	)
+	)?;
+
+	// potentially change data in res?
+
+	Ok(res)
 }
 
 pub fn get_closest_index() -> Option<PathBuf> {
