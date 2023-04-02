@@ -17,8 +17,6 @@ use serde::{Serialize, Deserialize};
 use indoc::indoc;
 use text_io::read;
 
-use path_slash::{PathExt as _, PathBufExt as _, CowExt as _};
-
 mod classes;
 use classes::*;
 pub use classes::IDFC;
@@ -32,7 +30,8 @@ mod cli {
     use std::collections::HashMap;
     use std::path::Path;
     use crate::classes::{ProgramState, ProgramStatePathed};
-	use crate::{sub, IDFC, scribe};
+	use crate::sub::path_relative_to_index;
+use crate::{sub, IDFC, scribe};
 
 	pub fn c_create(pathable: impl AsRef<Path>) -> IDFC<()> {
 		let path = pathable.as_ref();
@@ -55,7 +54,8 @@ mod cli {
 		st: &mut ProgramStatePathed,
 		target: impl AsRef<Path>,
 	) -> IDFC<()> {
-		let target = target.as_ref().to_path_buf();
+		let target = path_relative_to_index(target)?;
+		
 		let was_new_insert = st.state.ignores.insert(target);
 		if !was_new_insert {
 			println!("Already in ignores!");
@@ -68,8 +68,10 @@ mod cli {
 		st: &mut ProgramStatePathed,
 		target: impl AsRef<Path>, // TODO: allow multiple tags to remove at once
 	) -> IDFC<()> {
+		let target = path_relative_to_index(target)?;
+
 		st.state.ignores.drain_filter(
-			|v| v == target.as_ref()
+			|v| v == &target
 		);
 
 		sub::write_to_index(&st.path, &st.state)
