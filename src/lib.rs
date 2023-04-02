@@ -34,11 +34,12 @@ mod cli {
 
 	pub fn c_create(pathable: impl AsRef<Path>) -> IDFC<()> {
 		let path = pathable.as_ref();
-		if path.exists() {
-			panic!("An index already exists here! Consider deleting it.");
-		}
 
-		sub::write_to_index(path, &ProgramState::new())
+		if path.exists() {
+			Err("An index already exists here! Consider deleting it.".into())
+		} else {
+			sub::write_to_index(path, &ProgramState::new())
+		}
 	}
 
 	// Be careful!
@@ -104,14 +105,14 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 		"create"	=> {
 			assert_argc(args, &[0, 1]);
 
-			cli::c_create(
-				if args.len() < 1 {
-					// current working dir
-					get_cwd().join(INDEX_FILE_NAME)
-				} else {
-					PathBuf::from(&args[0])
-				}
-			)?;
+			let location = if args.len() < 1 {
+				// current working dir
+				get_cwd().join(INDEX_FILE_NAME)
+			} else {
+				PathBuf::from(&args[0])
+			};
+
+			cli::c_create(location)?;
 		},
 
 		"purge"		=> {
