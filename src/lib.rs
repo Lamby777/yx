@@ -330,6 +330,7 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 			assert_argc(args, &[0, 1]);
 
 			let st = load_state_only()?;
+			let tag_output_separator = ",\n";
 
 			let out =
 				if args.len() != 0 {
@@ -349,19 +350,17 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 							}
 						);
 
-						let human_readable = sorted.map(
+						sorted.map(
 							// Add counts in parentheses next to tag
-							|v| format!("{} ({})", v, counts[v])
-						).join(",");
-
-						human_readable
+							|v| format!("({}) \t>> {v}", counts[v])
+						).join(tag_output_separator)
 					} else {
 						return Err("Invalid `yx la` mode!".into());
 					}
 				} else {
 					sub::get_all_tags_from(
 						&st,
-					)?.join(", ")
+					)?.join(tag_output_separator)
 				};
 
 			println!("Tags: {}", out);
