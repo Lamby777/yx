@@ -414,7 +414,7 @@ pub fn load_state_and_path() -> IDFC<ProgramStatePathed> {
 	)?;
 
 	let mut res = ProgramStatePathed::from_path(index)?;
-	res.state.ignores.insert(res.path.clone());
+	res.state.ignores.insert(format!("./{}", INDEX_FILE_NAME).into());
 
 	Ok(res)
 }
