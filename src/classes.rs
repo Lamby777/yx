@@ -24,6 +24,7 @@ impl ProgramStatePathed {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ProgramState {
 	pub index:			HashMap<PathBuf, YxFileRecord>,
+	pub ignores:		HashSet<PathBuf>,
 	pub constraints:	YxConstraints,
 }
 
@@ -31,6 +32,7 @@ impl ProgramState {
 	pub fn new() -> Self {
 		ProgramState {
 			index:			HashMap::new(),
+			ignores:		HashSet::new(),
 			constraints:	YxConstraints { cons: vec![] },
 		}
 	}

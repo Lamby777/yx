@@ -1,5 +1,6 @@
 #![feature(map_many_mut)]
 #![feature(type_alias_impl_trait)]
+#![feature(hash_drain_filter)]
 // I have no idea why I have to do this in lib.rs :(
 
 const INDEX_FILE_NAME: &str	= ".yx_index";
@@ -45,6 +46,30 @@ mod cli {
 	// Be careful!
 	pub fn c_purge(st: &mut ProgramStatePathed) -> IDFC<()> {
 		st.state.index = HashMap::new();
+
+		sub::write_to_index(&st.path, &st.state)
+	}
+
+	pub fn c_ignore(
+		st: &mut ProgramStatePathed,
+		target: impl AsRef<Path>,
+	) -> IDFC<()> {
+		let target = target.as_ref().to_path_buf();
+		let was_new_insert = st.state.ignores.insert(target);
+		if !was_new_insert {
+			println!("Already in ignores!");
+		}
+
+		sub::write_to_index(&st.path, &st.state)
+	}
+
+	pub fn c_unignore(
+		st: &mut ProgramStatePathed,
+		target: impl AsRef<Path>, // TODO: allow multiple tags to remove at once
+	) -> IDFC<()> {
+		st.state.ignores.drain_filter(
+			|v| v == target.as_ref()
+		);
 
 		sub::write_to_index(&st.path, &st.state)
 	}
@@ -116,6 +141,8 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 		},
 
 		"purge"		=> {
+			assert_argc(args, &[0, 1]);
+
 			// short circuit check if "yes" is the next arg
 			let confirmed = args.len() >= 1 && (args[0].to_lowercase() == "yes");
 			let closest = get_closest_index().ok_or_else(
@@ -156,6 +183,32 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 			// at long last, we purge the tags, because
 			// no one with any regrets would get this far.
 			// that wasn't so hard, was it?
+		},
+
+		"ignore"	=> {
+			assert_argc(args, &[1]);
+
+			cli::c_ignore(
+				&mut load_state_and_path()?,
+				&args[0],
+			)?;
+		},
+
+		"unignore"	=> {
+			assert_argc(args, &[1]);
+
+			cli::c_unignore(
+				&mut load_state_and_path()?,
+				&args[0],
+			)?;
+		},
+
+		"ilist"		=> {
+			assert_argc(args, &[0]);
+
+			let st = load_state_only()?;
+
+			println!("Ignored: {}", st.ignores.iter().map(|ref v| v.display()).join(", "));
 		},
 
 		"add"		=> {
@@ -360,7 +413,10 @@ pub fn load_state_and_path() -> IDFC<ProgramStatePathed> {
 		|| format!("{} not found in current path!", INDEX_FILE_NAME)
 	)?;
 
-	ProgramStatePathed::from_path(index)
+	let mut res = ProgramStatePathed::from_path(index)?;
+	res.state.ignores.insert(res.path.clone());
+
+	Ok(res)
 }
 
 pub fn load_state_only() -> IDFC<ProgramState> {
@@ -447,6 +503,7 @@ fn cmd_replace_aliases<'a>(cmd: &'a String) -> &'a str {
 		"move"				=> "mv",
 		"copy"				=> "cp",
 		"listall"			=> "la",
+		"ignorelist"		=> "ilist",
 
 		"mvtags"			|
 		"movetags"			=> "mvt",

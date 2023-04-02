@@ -59,3 +59,10 @@ yx render copy named
 
 yx scribe
 -	Sorta the opposite of `yx render named`. Uses file names to create tags.
+
+yx ignore
+-	Ignore a file from recursive commands
+yx unignore
+-	Unignore a file from... you get the idea.
+yx ilist
+-	Display list of ignored paths
