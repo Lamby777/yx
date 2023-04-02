@@ -53,7 +53,7 @@ pub fn get_all_tags_from(state: &ProgramState) -> IDFC<Vec<YxTag>> {
 
 	let unique = index.into_iter().fold(
 		v,
-		|vec, (k, v)| {
+		|vec, (_, v)| {
 			let mut closure_res = vec.clone();
 
 			closure_res.extend(

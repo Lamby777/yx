@@ -1,5 +1,6 @@
 #![feature(map_many_mut)]
 #![feature(type_alias_impl_trait)]
+#![feature(hash_drain_filter)]
 // I have no idea why I have to do this in lib.rs :(
 
 const INDEX_FILE_NAME: &str	= ".yx_index";
@@ -16,7 +17,6 @@ use serde::{Serialize, Deserialize};
 use indoc::indoc;
 use text_io::read;
 
-
 mod classes;
 use classes::*;
 pub use classes::IDFC;
@@ -30,20 +30,49 @@ mod cli {
     use std::collections::HashMap;
     use std::path::Path;
     use crate::classes::{ProgramState, ProgramStatePathed};
-	use crate::{sub, IDFC, scribe};
+	use crate::sub::path_relative_to_index;
+use crate::{sub, IDFC, scribe};
 
 	pub fn c_create(pathable: impl AsRef<Path>) -> IDFC<()> {
 		let path = pathable.as_ref();
-		if path.exists() {
-			panic!("An index already exists here! Consider deleting it.");
-		}
 
-		sub::write_to_index(path, &ProgramState::new())
+		if path.exists() {
+			Err("An index already exists here! Consider deleting it.".into())
+		} else {
+			sub::write_to_index(path, &ProgramState::new())
+		}
 	}
 
 	// Be careful!
 	pub fn c_purge(st: &mut ProgramStatePathed) -> IDFC<()> {
 		st.state.index = HashMap::new();
+
+		sub::write_to_index(&st.path, &st.state)
+	}
+
+	pub fn c_ignore(
+		st: &mut ProgramStatePathed,
+		target: impl AsRef<Path>,
+	) -> IDFC<()> {
+		let target = path_relative_to_index(target)?;
+		
+		let was_new_insert = st.state.ignores.insert(target);
+		if !was_new_insert {
+			println!("Already in ignores!");
+		}
+
+		sub::write_to_index(&st.path, &st.state)
+	}
+
+	pub fn c_unignore(
+		st: &mut ProgramStatePathed,
+		target: impl AsRef<Path>, // TODO: allow multiple tags to remove at once
+	) -> IDFC<()> {
+		let target = path_relative_to_index(target)?;
+
+		st.state.ignores.drain_filter(
+			|v| v == &target
+		);
 
 		sub::write_to_index(&st.path, &st.state)
 	}
@@ -104,17 +133,19 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 		"create"	=> {
 			assert_argc(args, &[0, 1]);
 
-			cli::c_create(
-				if args.len() < 1 {
-					// current working dir
-					get_cwd().join(INDEX_FILE_NAME)
-				} else {
-					PathBuf::from(&args[0])
-				}
-			)?;
+			let location = if args.len() < 1 {
+				// current working dir
+				get_cwd().join(INDEX_FILE_NAME)
+			} else {
+				PathBuf::from(&args[0])
+			};
+
+			cli::c_create(location)?;
 		},
 
 		"purge"		=> {
+			assert_argc(args, &[0, 1]);
+
 			// short circuit check if "yes" is the next arg
 			let confirmed = args.len() >= 1 && (args[0].to_lowercase() == "yes");
 			let closest = get_closest_index().ok_or_else(
@@ -155,6 +186,32 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 			// at long last, we purge the tags, because
 			// no one with any regrets would get this far.
 			// that wasn't so hard, was it?
+		},
+
+		"ignore"	=> {
+			assert_argc(args, &[1]);
+
+			cli::c_ignore(
+				&mut load_state_and_path()?,
+				&args[0],
+			)?;
+		},
+
+		"unignore"	=> {
+			assert_argc(args, &[1]);
+
+			cli::c_unignore(
+				&mut load_state_and_path()?,
+				&args[0],
+			)?;
+		},
+
+		"ilist"		=> {
+			assert_argc(args, &[0]);
+
+			let st = load_state_only()?;
+
+			println!("Ignored: {}", st.ignores.iter().map(|ref v| v.display()).join(", "));
 		},
 
 		"add"		=> {
@@ -359,7 +416,10 @@ pub fn load_state_and_path() -> IDFC<ProgramStatePathed> {
 		|| format!("{} not found in current path!", INDEX_FILE_NAME)
 	)?;
 
-	ProgramStatePathed::from_path(index)
+	let mut res = ProgramStatePathed::from_path(index)?;
+	res.state.ignores.insert(format!("./{}", INDEX_FILE_NAME).into());
+
+	Ok(res)
 }
 
 pub fn load_state_only() -> IDFC<ProgramState> {
@@ -376,13 +436,17 @@ pub fn load_state_only() -> IDFC<ProgramState> {
 }
 
 pub fn parse_index_at(index_path: impl AsRef<Path>) -> IDFC<ProgramState> {
-	let res = fs::read_to_string(index_path.as_ref())?;
-	serde_json::from_str::<ProgramState>(&res).map_err(
+	let read_data = fs::read_to_string(index_path.as_ref())?;
+	let res = serde_json::from_str::<ProgramState>(&read_data).map_err(
 		|e| {
 			println!("Failed to parse index... Did you recently do an update?");
-			e.into()
+			e
 		}
-	)
+	)?;
+
+	// potentially change data in res?
+
+	Ok(res)
 }
 
 pub fn get_closest_index() -> Option<PathBuf> {
@@ -446,6 +510,7 @@ fn cmd_replace_aliases<'a>(cmd: &'a String) -> &'a str {
 		"move"				=> "mv",
 		"copy"				=> "cp",
 		"listall"			=> "la",
+		"ignorelist"		=> "ilist",
 
 		"mvtags"			|
 		"movetags"			=> "mvt",

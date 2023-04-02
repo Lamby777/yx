@@ -2,9 +2,9 @@
 * Module for stuff in `yx scribe`
 */
 
-use std::path::Path;
+use std::{path::{Path, PathBuf}, collections::HashSet};
 use walkdir::WalkDir;
-use crate::{classes::{ProgramState}, sub::add_tags_to, IDFC};
+use crate::{classes::{ProgramState}, sub::{add_tags_to, path_relative_to_index}, IDFC};
 
 pub enum ScribeMethod<'a> {
 	SplitBy(&'a str),
@@ -15,6 +15,8 @@ pub fn import_from_names(
 	target: impl AsRef<Path>,
 	method: ScribeMethod
 ) -> IDFC<()> {
+	let ignores_list = &st.ignores.clone();
+
 	let walker =
 		WalkDir::new(&target).into_iter()
 		.filter_map(|f| {
@@ -22,7 +24,13 @@ pub fn import_from_names(
 				println!("Error loading a file... {}", e);
 			}
 
-			f.ok()
+			f.ok().and_then(|e| {
+				if !check_ignored(ignores_list, e.path()).ok()? {
+					Some(e)
+				} else {
+					None
+				}
+			})
 		});
 	
 	for entry in walker {
@@ -39,6 +47,15 @@ pub fn import_from_names(
 	}
 
 	Ok(())
+}
+
+fn check_ignored(ignores: &HashSet<PathBuf>, e: &Path) -> IDFC<bool> {
+	let rel: &Path = &path_relative_to_index(e)?;
+	let should_ignore = ignores.iter().any(|ig| {
+		rel.starts_with(ig)
+	});
+
+	Ok(should_ignore)
 }
 
 fn process_into_tags<'a>(path: &'a str, method: &ScribeMethod) -> Vec<&'a str> {
