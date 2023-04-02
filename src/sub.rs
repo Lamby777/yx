@@ -7,7 +7,7 @@
 
 use std::{fs, path::{Path, PathBuf}};
 use crate::{HashMap, YxIndexIter, get_closest_index,
-			ProgramState, YxFileRecord, IDFC};
+			ProgramState, YxFileRecord, IDFC, classes::YxTag};
 use pathdiff::diff_paths;
 use path_absolutize::*;
 
@@ -44,6 +44,27 @@ pub fn write_to_index(path: &Path, state: &ProgramState) -> IDFC<()> {
 		println!("Failed to write to {:?}!", path);
 		e.into()
 	})
+}
+
+pub fn get_all_tags_from(state: &ProgramState) -> IDFC<Vec<YxTag>> {
+	let index = &state.index;
+
+	let v: Vec<String> = vec![];
+
+	let unique = index.into_iter().fold(
+		v,
+		|vec, (k, v)| {
+			let mut closure_res = vec.clone();
+
+			closure_res.extend(
+				v.tags.iter().filter(|t| !vec.contains(t)).cloned()
+			);
+
+			closure_res
+		}
+	);
+
+	Ok(unique)
 }
 
 pub fn add_tags_to(state: &mut ProgramState, path: &Path, tags: &[&str]) -> IDFC<()> {
