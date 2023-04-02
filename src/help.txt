@@ -11,6 +11,8 @@ yx list missing
 -	List all indexed where the file doesn't exist
 yx list by <tag>
 -	List indexed files with specified tag
+yx la
+-	List any tags which apply to at least 1 file in the index
 
 yx clean
 -	Remove all indexed where the file doesn't exist

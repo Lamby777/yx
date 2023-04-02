@@ -269,6 +269,16 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 			}
 		},
 
+		"la"		=> {
+			assert_argc(args, &[0]);
+
+			let tags = sub::get_all_tags_from(
+				&load_state_only()?,
+			)?;
+
+			println!("Tags: {}", tags.join(", "));
+		}
+
 		"list"		=> {
 			assert_argc(args, &[0, 1, 2]);
 			let argc = args.len();
@@ -435,6 +445,7 @@ fn cmd_replace_aliases<'a>(cmd: &'a String) -> &'a str {
 		"ls"				=> "list",
 		"move"				=> "mv",
 		"copy"				=> "cp",
+		"listall"			=> "la",
 
 		"mvtags"			|
 		"movetags"			=> "mvt",
