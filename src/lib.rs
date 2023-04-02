@@ -327,13 +327,44 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 		},
 
 		"la"		=> {
-			assert_argc(args, &[0]);
+			assert_argc(args, &[0, 1]);
 
-			let tags = sub::get_all_tags_from(
-				&load_state_only()?,
-			)?;
+			let st = load_state_only()?;
 
-			println!("Tags: {}", tags.join(", "));
+			let out =
+				if args.len() != 0 {
+					let order_mode: &str = &args[0].to_lowercase();
+					if matches!(order_mode, "l->h" | "h->l") {
+						let counts = sub::get_tag_counts_from(
+							&st,
+						)?;
+						
+						let sorted = counts.keys().sorted_by(
+							|a, b| {
+								match order_mode {
+									"l->h"	=> Ord::cmp(&counts[*a], &counts[*b]),
+									"h->l"	=> Ord::cmp(&counts[*b], &counts[*a]),
+									_		=> unreachable!(),
+								}
+							}
+						);
+
+						let human_readable = sorted.map(
+							// Add counts in parentheses next to tag
+							|v| format!("{} ({})", v, counts[v])
+						).join(",");
+
+						human_readable
+					} else {
+						return Err("Invalid `yx la` mode!".into());
+					}
+				} else {
+					sub::get_all_tags_from(
+						&st,
+					)?.join(", ")
+				};
+
+			println!("Tags: {}", out);
 		}
 
 		"list"		=> {

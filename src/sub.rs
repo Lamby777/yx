@@ -67,6 +67,21 @@ pub fn get_all_tags_from(state: &ProgramState) -> IDFC<Vec<YxTag>> {
 	Ok(unique)
 }
 
+/// Actually really different from the non-sorted version!
+/// Make sure you're using the right one!
+pub fn get_tag_counts_from(state: &ProgramState) -> IDFC<HashMap<String, u32>> {
+	let index = &state.index;
+
+	let mut totals: HashMap<String, u32> = HashMap::new();
+	for (_, YxFileRecord { tags }) in index {
+		for tag in tags {
+			*totals.entry(tag.to_string()).or_insert(0) += 1;
+		}
+	}
+
+	Ok(totals)
+}
+
 pub fn add_tags_to(state: &mut ProgramState, path: &Path, tags: &[&str]) -> IDFC<()> {
 	let path_rel = path_relative_to_index(&path)?;
 
