@@ -27,11 +27,10 @@ mod render;
 mod scribe;
 
 mod cli {
-    use std::collections::HashMap;
     use std::path::Path;
     use crate::classes::{ProgramState, ProgramStatePathed};
 	use crate::sub::path_relative_to_index;
-use crate::{sub, IDFC, scribe};
+	use crate::{sub, IDFC, scribe};
 
 	pub fn c_create(pathable: impl AsRef<Path>) -> IDFC<()> {
 		let path = pathable.as_ref();
@@ -45,7 +44,7 @@ use crate::{sub, IDFC, scribe};
 
 	// Be careful!
 	pub fn c_purge(st: &mut ProgramStatePathed) -> IDFC<()> {
-		st.state.index = HashMap::new();
+		st.state = ProgramState::new();
 
 		sub::write_to_index(&st.path, &st.state)
 	}
@@ -148,9 +147,11 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 
 			// short circuit check if "yes" is the next arg
 			let confirmed = args.len() >= 1 && (args[0].to_lowercase() == "yes");
-			let closest = get_closest_index().ok_or_else(
-				|| "No index files in this directory or any of its parent directories!"
-			)?;
+			let closest = get_closest_index()?;
+			let st =
+				parse_index_at(&closest).unwrap_or_else(
+					|_| ProgramState::new()
+				);
 
 			if !confirmed {
 				if args.len() <= 0 {
@@ -179,9 +180,13 @@ pub fn start(args: Vec<String>) -> IDFC<()> {
 			// are they gone yet?
 			// ok cool, they're gone.
 
-			cli::c_purge(
-				&mut load_state_and_path()?
-			)?;
+			// make a ProgramStatePathed
+			let mut st_pathed = ProgramStatePathed {
+				path:	closest,
+				state:	st,
+			};
+
+			cli::c_purge(&mut st_pathed)?;
 
 			// at long last, we purge the tags, because
 			// no one with any regrets would get this far.
@@ -442,51 +447,43 @@ pub fn show_help() {
 }
 
 pub fn load_state_and_path() -> IDFC<ProgramStatePathed> {
-	let index = get_closest_index().ok_or_else(
-		|| format!("{} not found in current path!", INDEX_FILE_NAME)
-	)?;
-
-	let mut res = ProgramStatePathed::from_path(index)?;
-	res.state.ignores.insert(format!("./{}", INDEX_FILE_NAME).into());
-
-	Ok(res)
+	let index = get_closest_index()?;
+	Ok(
+		load_state_and_path_from(&index)?
+	)
 }
 
 pub fn load_state_only() -> IDFC<ProgramState> {
-	// maybe make this call parse_index_at later?
-	// would be more efficient, but too busy rn to think of
-	// a way to do it without code duplication for the
-	// get_closest_index() part and also not have a pointless helper function
-	let ProgramStatePathed {
-		state: res,
-		..
-	} = load_state_and_path()?;
+	Ok(parse_index_at(get_closest_index()?)?)
+}
 
-	Ok(res)
+pub fn load_state_and_path_from(index: &Path) -> IDFC<ProgramStatePathed> {
+	Ok(
+		ProgramStatePathed::from_path(index.to_path_buf())?
+	)
 }
 
 pub fn parse_index_at(index_path: impl AsRef<Path>) -> IDFC<ProgramState> {
 	let read_data = fs::read_to_string(index_path.as_ref())?;
-	let res = serde_json::from_str::<ProgramState>(&read_data).map_err(
+	let mut res = serde_json::from_str::<ProgramState>(&read_data).map_err(
 		|e| {
 			println!("Failed to parse index... Did you recently do an update?");
 			e
 		}
 	)?;
 
-	// potentially change data in res?
+	res.ignores.insert(format!("./{}", INDEX_FILE_NAME).into());
 
 	Ok(res)
 }
 
-pub fn get_closest_index() -> Option<PathBuf> {
+pub fn get_closest_index() -> IDFC<PathBuf> {
 	let v = get_all_current_indexes();
-
-	if v.len() <= 0 {
-		None
-	} else {
-		Some(v[0].clone())
-	}
+	let closest = v.get(0);
+	
+	closest.cloned().ok_or_else(
+		|| format!("{} not found in current path!", INDEX_FILE_NAME).as_str().into()
+	)
 }
 
 pub fn get_all_current_indexes() -> Vec<PathBuf> {
@@ -513,9 +510,9 @@ pub fn get_all_current_indexes() -> Vec<PathBuf> {
 	paths
 }
 
+/// this just builds a string for convenience.
+/// use get_closest_index() for finding what to write to
 pub fn cwd_index_path() -> PathBuf {
-	// this just builds a string for convenience.
-	// use get_closest_index() for finding what to write to
 	get_cwd().join(INDEX_FILE_NAME)
 }
 
